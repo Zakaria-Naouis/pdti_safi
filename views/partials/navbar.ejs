@@ -1,0 +1,91 @@
+<!-- views/partials/navbar.ejs -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="/dashboard">
+      <i class="fas fa-landmark me-2"></i>PDTI Safi
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <% if (typeof menuItems !== 'undefined' && menuItems) { %>
+        <% menuItems.forEach(function(item) { %>
+        <li class="nav-item <%= item.dropdown ? 'dropdown' : '' %>">
+          <% if (item.dropdown) { %>
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="<%= item.icon %> me-1"></i><%= item.title %>
+          </a>
+          <ul class="dropdown-menu">
+            <% item.dropdown.forEach(function(dropdownItem) { %>
+            <li>
+              <a class="dropdown-item" href="<%= dropdownItem.url %>">
+                <i class="<%= dropdownItem.icon %> me-2"></i><%= dropdownItem.title %>
+              </a>
+            </li>
+            <% }); %>
+          </ul>
+          <% } else { %>
+          <a class="nav-link <%= item.active ? 'active' : '' %>" href="<%= item.url %>">
+            <i class="<%= item.icon %> me-1"></i><%= item.title %>
+            <% if (item.badge && item.badge > 0) { %>
+            <span class="badge <%= item.badgeClass %> ms-1 animate__animated animate__pulse animate__infinite">
+              <%= item.badge %>
+            </span>
+            <% } %>
+          </a>
+          <% } %>
+        </li>
+        <% }); %>
+        <% } %>
+      </ul>
+
+      <ul class="navbar-nav">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="fas fa-user me-1"></i>
+            <%= user ? user.prenom + ' ' + user.nom : 'Utilisateur' %>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-cog me-2"></i>Mon profil</a></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<style>
+  /* Animation pour les badges de notification */
+  .animate__pulse {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.1);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* Style des badges */
+  .nav-link .badge {
+    font-size: 0.7rem;
+    padding: 0.25em 0.4em;
+    position: relative;
+    top: -2px;
+  }
+</style>

@@ -1,0 +1,893 @@
+<!-- views/projects/view.ejs - Code COMPLET -->
+
+<%
+function decodeHTMLEntities(text) {
+  if (!text) return '';
+
+  // Décode les entités HTML courantes
+  const entities = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+    '&#x27;': "'",
+    '&#x2F;': '/',
+  };
+
+  let decoded = text;
+  let lastDecoded;
+
+  // Décodage récursif pour gérer les encodages multiples (&amp;amp;)
+  do {
+    lastDecoded = decoded;
+    decoded = decoded.replace(/&(amp|lt|gt|quot|#39|#x27|#x2F);/g, match => entities[match] || match);
+  } while (decoded !== lastDecoded);
+
+  return decoded;
+}
+%>
+
+
+<div class="row">
+  <!-- En-tête du projet -->
+  <div class="col-md-12">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h4 class="mb-0">
+              <i class="fas fa-project-diagram me-2"></i>
+              <span class="badge bg-light text-primary me-2">N° <%= project.num_projet %></span>
+              <%- decodeHTMLEntities(project.intitule) %>
+            </h4>
+          </div>
+          <div class="col-md-4 text-end">
+            <a href="/dashboard" class="btn btn-light btn-sm">
+              <i class="fas fa-arrow-left me-1"></i>Retour au Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Informations générales -->
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <h6 class="text-primary">Pôle</h6>
+            <p class="mb-0 fw-bold"><%- decodeHTMLEntities(project.lib_pole) %></p>
+          </div>
+          <div class="col-md-3">
+            <h6 class="text-primary">Axe</h6>
+            <p class="mb-0"><%- decodeHTMLEntities(project.lib_axe) %></p>
+          </div>
+          <div class="col-md-3">
+            <h6 class="text-primary">Secteur</h6>
+            <p class="mb-0"><%- decodeHTMLEntities(project.lib_secteur) %></p>
+          </div>
+          <div class="col-md-3">
+            <h6 class="text-primary">Période</h6>
+            <p class="mb-0"><%= project.periode_formatted %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <!-- Indicateurs clés -->
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-chart-bar me-2"></i>Indicateurs Clés
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+              <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                <h3 class="mb-1"><%= project.cout_total_formatted %></h3>
+                <p class="mb-0">Millions MDH</p>
+                <% if (indicators && indicators.coutParBeneficiaire && indicators.coutParBeneficiaire > 0) { %>
+                <small class="opacity-75"><%= indicators.coutParBeneficiaire.toLocaleString('fr-FR') %> MAD/bénéficiaire</small>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+              <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h3 class="mb-1"><%= project.nbr_emplois_formatted %></h3>
+                <p class="mb-0">Emplois Directs</p>
+                <% if (indicators && indicators.coutParEmploi && indicators.coutParEmploi > 0) { %>
+                <small class="opacity-75"><%= (indicators.coutParEmploi/1000000).toFixed(1) %>M MAD/emploi</small>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-warning text-white h-100">
+              <div class="card-body text-center">
+                <i class="fas fa-user-friends fa-2x mb-2"></i>
+                <h3 class="mb-1"><%= project.nbr_beneficiaires_formatted %></h3>
+                <p class="mb-0">Bénéficiaires</p>
+                <% if (indicators && indicators.densiteBeneficiaires && indicators.densiteBeneficiaires > 0) { %>
+                <small class="opacity-75"><%= indicators.densiteBeneficiaires %>% de la population</small>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+              <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h3 class="mb-1"><%= project.duree_formatted %></h3>
+                <p class="mb-0">Durée</p>
+                <% if (indicators && indicators.statutTemporel) { %>
+                <small class="opacity-75"><%= indicators.statutTemporel %></small>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barre de progression temporelle -->
+        <% if (indicators && indicators.progressionTemporelle && indicators.progressionTemporelle > 0) { %>
+        <div class="mt-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-muted">Progression temporelle</span>
+            <span class="fw-bold"><%= indicators.progressionTemporelle %>%</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-<%= indicators.progressionTemporelle >= 100 ? 'success' : (indicators.progressionTemporelle >= 75 ? 'warning' : 'info') %>" style="width: <%= indicators.progressionTemporelle %>%">
+            </div>
+          </div>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <!-- Description détaillée -->
+  <div class="col-md-8">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-info-circle me-2"></i>Description du Projet
+        </h5>
+      </div>
+      <div class="card-body">
+        <!-- Section Objectifs réorganisée -->
+        <div class="row mb-4">
+          <!-- Colonne Objectif Principal -->
+          <div class="col-md-6 mb-3">
+            <div class="objectif-section">
+              <h6 class="text-primary border-bottom pb-2 mb-3">
+                <i class="fas fa-bullseye me-1"></i>Objectif
+              </h6>
+              <div class="objectif-content bg-light p-3 rounded">
+                <p class="mb-0 fw-bold text-dark">
+                  <%- decodeHTMLEntities(project.nom_objectif || 'Non défini') %>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Colonne Détails Objectif -->
+          <div class="col-md-6 mb-3">
+            <div class="objectif-section">
+              <h6 class="text-primary border-bottom pb-2 mb-3">
+                <i class="fas fa-list-ul me-1"></i>Détails Objectif
+              </h6>
+              <div class="objectif-details bg-light p-3 rounded">
+                <% if (project.objectifs) { %>
+                <div class="objectif-list">
+                  <%- decodeHTMLEntities(project.objectifs) %>
+                </div>
+                <% } else { %>
+                <p class="mb-0 text-muted fst-italic">Aucun détail disponible</p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Composantes -->
+        <% if (project.composantes) { %>
+        <div class="mb-4">
+          <h6 class="text-primary border-bottom pb-2 mb-3">
+            <i class="fas fa-puzzle-piece me-1"></i>Composantes
+          </h6>
+          <div class="composantes-content p-3 bg-light rounded">
+            <p class="text-justify mb-0"><%- decodeHTMLEntities(project.composantes) %></p>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Détails techniques -->
+        <div class="row">
+          <% if (project.superficie_lineaire) { %>
+          <div class="col-md-6 mb-3">
+            <h6 class="text-secondary">Superficie/Linéaire</h6>
+            <p class="mb-0 fw-bold"><%- decodeHTMLEntities(project.superficie_lineaire) %></p>
+          </div>
+          <% } %>
+          <% if (project.echeancier) { %>
+          <div class="col-md-6 mb-3">
+            <h6 class="text-secondary">Échéancier</h6>
+            <p class="mb-0 fw-bold"><%- decodeHTMLEntities(project.echeancier) %></p>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- Détails coût -->
+        <% if (project.detail_cout) { %>
+        <div class="mb-3">
+          <h6 class="text-secondary">Détail du coût</h6>
+          <div class="bg-light p-3 rounded">
+            <p class="mb-0"><%- decodeHTMLEntities(project.detail_cout) %></p>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Localisation -->
+        <% if (communes && communes.length > 0) { %>
+        <div class="mb-3">
+          <h6 class="text-secondary">Communes concernées</h6>
+          <div class="bg-light p-3 rounded">
+            <div class="d-flex flex-wrap gap-2">
+              <% communes.forEach(function(commune, index) { %>
+              <span class="badge bg-primary"><%- decodeHTMLEntities(commune.nom_fr) %></span>
+              <% }); %>
+            </div>
+            <% if (indicators && indicators.totalPopulation) { %>
+            <small class="text-muted mt-2 d-block">
+              Population totale: <%= indicators.totalPopulation.toLocaleString('fr-FR') %> habitants
+            </small>
+            <% } %>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Détails emplois -->
+        <% if (project.detail_nbr_emploi) { %>
+        <div class="mb-3">
+          <h6 class="text-secondary">Détail des emplois</h6>
+          <div class="bg-light p-3 rounded">
+            <p class="mb-0"><%- decodeHTMLEntities(project.detail_nbr_emploi) %></p>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Détails bénéficiaires -->
+        <% if (project.detail_nbr_beneficiaires) { %>
+        <div class="mb-3">
+          <h6 class="text-secondary">Détail des bénéficiaires</h6>
+          <div class="bg-light p-3 rounded">
+            <p class="mb-0"><%- decodeHTMLEntities(project.detail_nbr_beneficiaires) %></p>
+          </div>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Informations complémentaires -->
+  <div class="col-md-4">
+    <!-- Statuts et études -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-clipboard-check me-2"></i>Statuts
+        </h6>
+      </div>
+      <div class="card-body">
+        <!-- Statut foncier -->
+        <div class="mb-3">
+          <h6 class="text-secondary">Foncier</h6>
+          <div class="d-flex flex-wrap gap-2">
+            <% if (project.fc_disponibilite) { %>
+            <span class="badge bg-success">
+              <i class="fas fa-check me-1"></i>Disponible
+            </span>
+            <% } %>
+            <% if (project.fc_visibilite) { %>
+            <span class="badge bg-info">
+              <i class="fas fa-eye me-1"></i>Visible
+            </span>
+            <% } %>
+            <% if (project.fc_assiette_assine) { %>
+            <span class="badge bg-warning">
+              <i class="fas fa-file-signature me-1"></i>Assiette Assinée
+            </span>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Statut juridique -->
+        <% if (project.statut_juridique) { %>
+        <div class="mb-3">
+          <h6 class="text-secondary">Statut Juridique</h6>
+          <span class="badge bg-secondary"><%- decodeHTMLEntities(project.statut_juridique) %></span>
+        </div>
+        <% } %>
+
+        <!-- Étude -->
+        <div class="mb-3">
+          <h6 class="text-secondary">Étude</h6>
+          <% if (project.etude) { %>
+          <span class="badge bg-success">
+            <i class="fas fa-check me-1"></i>Réalisée
+          </span>
+          <% if (project.etude_etat) { %>
+          <br><small class="text-muted mt-1">État: <%= decodeHTMLEntities(project.etude_etat) %></small>
+          <% } %>
+          <% } else { %>
+          <span class="badge bg-danger">
+            <i class="fas fa-times me-1"></i>Non réalisée
+          </span>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acteurs -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-users-cog me-2"></i>Acteurs
+        </h6>
+      </div>
+      <div class="card-body">
+        <% if (project.nom_moa) { %>
+        <div class="mb-2">
+          <h6 class="text-secondary mb-1">MOA</h6>
+          <p class="mb-0 small"><%- decodeHTMLEntities(project.nom_moa) %></p>
+        </div>
+        <% } %>
+        <% if (project.nom_moe) { %>
+        <div class="mb-2">
+          <h6 class="text-secondary mb-1">MOE</h6>
+          <p class="mb-0 small"><%- decodeHTMLEntities(project.nom_moe) %></p>
+        </div>
+        <% } %>
+        <% if (project.nom_gestionnaire) { %>
+        <div class="mb-2">
+          <h6 class="text-secondary mb-1">Gestionnaire</h6>
+          <p class="mb-0 small"><%- decodeHTMLEntities(project.nom_gestionnaire) %></p>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Financement -->
+    <% if (financements && financements.length > 0) { %>
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-coins me-2"></i>Financement
+        </h6>
+      </div>
+      <div class="card-body">
+        <% financements.forEach(function(financement) { %>
+        <div class="d-flex justify-content-between mb-2">
+          <small class="text-muted"><%- decodeHTMLEntities(financement.nom_partenaire) %></small>
+          <small class="fw-bold"><%= parseFloat(financement.montant).toFixed(2) %> MDH</small>
+        </div>
+        <% }); %>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Localisation détaillée -->
+<% if (communes && communes.length > 0) { %>
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-map-marker-alt me-2"></i>Localisation Détaillée
+        </h5>
+        <%
+var communeCount = (indicators && indicators.totalCommunes) ? indicators.totalCommunes : communes.length;
+var communeText = communeCount > 1 ? 'communes' : 'commune';
+%>
+        <span class="badge bg-primary rounded-pill">
+          <%= communeCount %> <%= communeText %>
+        </span>
+      </div>
+      <div class="card-body">
+        <!-- Statistiques de localisation -->
+        <% if (indicators && indicators.totalPopulation && indicators.totalMenages) { %>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Population totale concernée :</span>
+              <span class="fw-bold text-primary">
+                <%= indicators.totalPopulation.toLocaleString('fr-FR') %> habitants
+              </span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Nombre de ménages :</span>
+              <span class="fw-bold text-info">
+                <%= indicators.totalMenages.toLocaleString('fr-FR') %> ménages
+              </span>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Liste des communes -->
+        <div class="table-responsive">
+          <table class="table table-sm table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Commune</th>
+                <th>Cercle</th>
+                <th>Caïdat</th>
+                <th class="text-end">Population</th>
+                <th class="text-end">Ménages</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% communes.forEach(function(commune) { %>
+              <tr>
+                <td>
+                  <strong><%- decodeHTMLEntities(commune.nom_fr) %></strong>
+                  <% if (commune.nom_ar) { %>
+                  <br><small class="text-muted"><%- commune.nom_ar %></small>
+                  <% } %>
+                </td>
+                <td><%= commune.nom_cercle_fr ? decodeHTMLEntities(commune.nom_cercle_fr) : '-' %></td>
+                <td><%= commune.libcaidat_fr ? decodeHTMLEntities(commune.libcaidat_fr) : '-' %></td>
+                <td class="text-end">
+                  <%= commune.nbr_habitants ? commune.nbr_habitants.toLocaleString('fr-FR') : '-' %>
+                </td>
+                <td class="text-end">
+                  <%= commune.nbr_menage ? commune.nbr_menage.toLocaleString('fr-FR') : '-' %>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<!-- Projets similaires -->
+<% if (similarProjects && similarProjects.length > 0) { %>
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-search me-2"></i>Projets Similaires
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <% similarProjects.forEach(function(similarProject) { %>
+          <div class="col-md-6 mb-3">
+            <div class="card border-left-primary h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <span class="badge bg-primary">N° <%= similarProject.num_projet %></span>
+                  <small class="text-muted">
+                    <%= similarProject.cout_total_mdh ? parseFloat(similarProject.cout_total_mdh).toFixed(1) : '0' %> MDH
+                  </small>
+                </div>
+                <h6 class="card-title">
+                  <a href="/projects/view/<%= similarProject.id %>" class="text-decoration-none">
+                    <%
+var titleText = decodeHTMLEntities(similarProject.intitule);
+if (titleText && titleText.length > 60) {
+titleText = titleText.substring(0, 60) + '...';
+}
+%>
+                    <%- titleText %>
+                  </a>
+                </h6>
+                <div class="small text-muted">
+                  <i class="fas fa-folder me-1"></i><%- decodeHTMLEntities(similarProject.lib_axe) %>
+                  <br>
+                  <i class="fas fa-tag me-1"></i><%- decodeHTMLEntities(similarProject.lib_secteur) %>
+                </div>
+              </div>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<!-- ========================================
+     STYLES CSS COMPLETS
+     ======================================== -->
+<style>
+  /* ========================================
+   STYLES GÉNÉRAUX
+   ======================================== */
+  .border-left-primary {
+    border-left: 4px solid var(--bs-primary) !important;
+  }
+
+  .card-title a:hover {
+    color: var(--bs-primary) !important;
+  }
+
+  .progress {
+    height: 8px;
+    border-radius: 4px;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+
+  .text-justify {
+    text-align: justify;
+    hyphens: auto;
+  }
+
+  /* ========================================
+   STYLES POUR LA SECTION OBJECTIFS
+   ======================================== */
+
+  .objectif-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .objectif-content,
+  .objectif-details {
+    flex: 1;
+    min-height: 120px;
+    max-height: 250px;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    word-break: break-word;
+    position: relative;
+  }
+
+  /* Objectif content avec scrollbar conditionnelle */
+  .objectif-content {
+    overflow-y: auto;
+  }
+
+  /* Détails objectif avec scrollbar TOUJOURS visible */
+  .objectif-details {
+    overflow-y: scroll !important;
+  }
+
+  /* Style pour le titre de l'objectif principal */
+  .objectif-content p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #2c3e50;
+    word-wrap: break-word;
+    margin: 0;
+  }
+
+  /* Style pour les détails objectifs */
+  .objectif-details {
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .objectif-list {
+    color: #495057;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  /* Si les objectifs sont une liste HTML */
+  .objectif-list ul,
+  .objectif-list ol {
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+
+  .objectif-list li {
+    margin-bottom: 0.5rem;
+    text-align: justify;
+    word-wrap: break-word;
+  }
+
+  /* Scrollbar personnalisée pour Webkit (Chrome, Safari, Edge) */
+  .objectif-content::-webkit-scrollbar,
+  .objectif-details::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .objectif-content::-webkit-scrollbar-track,
+  .objectif-details::-webkit-scrollbar-track {
+    background: #e9ecef;
+    border-radius: 4px;
+    margin: 4px 0;
+  }
+
+  .objectif-content::-webkit-scrollbar-thumb,
+  .objectif-details::-webkit-scrollbar-thumb {
+    background: #0d6efd;
+    border-radius: 4px;
+    border: 2px solid #e9ecef;
+  }
+
+  .objectif-content::-webkit-scrollbar-thumb:hover,
+  .objectif-details::-webkit-scrollbar-thumb:hover {
+    background: #0b5ed7;
+  }
+
+  /* Scrollbar pour Firefox */
+  .objectif-content,
+  .objectif-details {
+    scrollbar-width: thin;
+    scrollbar-color: #0d6efd #e9ecef;
+  }
+
+  /* Alignement des headers */
+  .objectif-section h6 {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Style pour la section composantes */
+  .composantes-content {
+    border-left: 4px solid #0d6efd;
+    word-wrap: break-word;
+  }
+
+  /* Animation au survol */
+  .objectif-content:hover,
+  .objectif-details:hover {
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+    transition: box-shadow 0.3s ease;
+  }
+
+  /* Border colorée pour distinction visuelle */
+  .objectif-content {
+    border-left: 3px solid #198754;
+  }
+
+  .objectif-details {
+    border-left: 3px solid #0d6efd;
+  }
+
+  /* Indicateur visuel de scroll disponible */
+  .objectif-details::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 8px;
+    height: 20px;
+    background: linear-gradient(to bottom, transparent, rgba(248, 249, 250, 0.95));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .objectif-details.has-scroll::after {
+    opacity: 1;
+  }
+
+  /* ========================================
+   RESPONSIVE
+   ======================================== */
+  @media (max-width: 768px) {
+
+    .objectif-content,
+    .objectif-details {
+      max-height: 180px;
+      min-height: 100px;
+    }
+
+    .objectif-section h6 {
+      font-size: 0.95rem;
+    }
+
+    .objectif-content p {
+      font-size: 0.9rem;
+    }
+
+    .objectif-details {
+      font-size: 0.85rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+
+    .objectif-content,
+    .objectif-details {
+      max-height: 150px;
+    }
+  }
+
+  /* ========================================
+   IMPRESSION
+   ======================================== */
+  @media print {
+
+    .btn,
+    .card-header {
+      display: none !important;
+    }
+
+    .card {
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .objectif-content,
+    .objectif-details {
+      max-height: none !important;
+      overflow: visible !important;
+      border: 1px solid #dee2e6 !important;
+    }
+
+    .bg-light {
+      background-color: #f8f9fa !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .objectif-details::after {
+      display: none !important;
+    }
+
+    /* Assurer la lisibilité en impression */
+    .objectif-content,
+    .objectif-details,
+    .composantes-content {
+      page-break-inside: avoid;
+    }
+  }
+</style>
+
+<script>
+  // ========================================
+  // JAVASCRIPT COMPLET POUR view.ejs
+  // À PLACER DANS LA BALISE <script>
+  // ========================================
+
+  document.addEventListener('DOMContentLoaded', function() {
+
+    // ==========================================
+    // 1. SMOOTH SCROLL POUR LES ANCRES
+    // ==========================================
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // ==========================================
+    // 2. ANIMATION D'ENTRÉE POUR LES CARTES
+    // ==========================================
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, index * 100);
+    });
+
+    // ==========================================
+    // 3. TOOLTIP POUR LES BADGES
+    // ==========================================
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // ==========================================
+    // 4. IMPRESSION AUTOMATIQUE
+    // ==========================================
+    if (window.location.hash === '#print') {
+      window.print();
+    }
+
+    // ==========================================
+    // 5. GESTION DU SCROLL POUR LES OBJECTIFS
+    // ==========================================
+    const objectifDetails = document.querySelectorAll('.objectif-details');
+
+    objectifDetails.forEach(detail => {
+
+      // Fonction pour vérifier si le contenu est scrollable
+      function checkScroll() {
+        if (detail.scrollHeight > detail.clientHeight) {
+          detail.classList.add('has-scroll');
+        } else {
+          detail.classList.remove('has-scroll');
+          // Masquer la scrollbar si le contenu ne dépasse pas
+          detail.style.overflowY = 'hidden';
+        }
+      }
+
+      // Vérifier au chargement initial
+      checkScroll();
+
+      // Vérifier lors du redimensionnement de la fenêtre
+      window.addEventListener('resize', checkScroll);
+
+      // Gérer l'indicateur de gradient lors du scroll
+      detail.addEventListener('scroll', function() {
+        const isAtBottom = detail.scrollTop + detail.clientHeight >= detail.scrollHeight - 5;
+
+        if (isAtBottom) {
+          // On est en bas, masquer l'indicateur
+          detail.classList.remove('has-scroll');
+        } else {
+          // On n'est pas en bas, afficher l'indicateur si nécessaire
+          if (detail.scrollHeight > detail.clientHeight) {
+            detail.classList.add('has-scroll');
+          }
+        }
+      });
+    });
+
+    // ==========================================
+    // 6. GESTION DU SCROLL POUR OBJECTIF CONTENT
+    // ==========================================
+    const objectifContent = document.querySelectorAll('.objectif-content');
+
+    objectifContent.forEach(content => {
+      // Si le contenu ne dépasse pas, masquer la scrollbar
+      if (content.scrollHeight <= content.clientHeight) {
+        content.style.overflowY = 'hidden';
+      }
+
+      // Vérifier lors du redimensionnement
+      window.addEventListener('resize', function() {
+        if (content.scrollHeight <= content.clientHeight) {
+          content.style.overflowY = 'hidden';
+        } else {
+          content.style.overflowY = 'auto';
+        }
+      });
+    });
+
+  });
+
+  // ==========================================
+  // FONCTION GLOBALE POUR IMPRIMER LE PROJET
+  // ==========================================
+  function printProject() {
+    window.print();
+  }
+</script>

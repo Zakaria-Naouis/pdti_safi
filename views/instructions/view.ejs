@@ -1,0 +1,185 @@
+<!-- views/instructions/view.ejs - Vue pour voir les détails d'une instruction -->
+<%- include('../partials/header', { title: title }) %>
+
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-file-alt me-2"></i><%= pageTitle %>
+          </h5>
+          <div>
+            <a href="/dashboard/gouverneur" class="btn btn-secondary">
+              <i class="fas fa-arrow-left me-1"></i>Retour à la liste
+            </a>
+            <% if (instruction.emetteur_id === user.id && instruction.lib_statut !== 'Exécuté') { %>
+            <a href="/instructions/edit/<%= instruction.id %>" class="btn btn-primary">
+              <i class="fas fa-edit me-1"></i>Modifier
+            </a>
+            <% } %>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Informations principales -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6 class="text-primary">Informations de l'instruction</h6>
+              <table class="table table-sm">
+                <tr>
+                  <th width="40%">Numéro :</th>
+                  <td><span class="badge bg-primary fs-6"><%= instruction.num_instruction %></span></td>
+                </tr>
+                <tr>
+                  <th>Date d'instruction :</th>
+                  <td>
+                    <i class="fas fa-calendar me-1"></i>
+                    <%= new Date(instruction.date_instruction).toLocaleDateString('fr-FR') %>
+                  </td>
+                </tr>
+                <tr>
+                  <th>Date limite :</th>
+                  <td>
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    <span class="<%= new Date(instruction.date_limite) < new Date() && instruction.lib_statut !== 'Exécuté' ? 'text-danger fw-bold' : 'text-success' %>">
+                      <%= new Date(instruction.date_limite).toLocaleDateString('fr-FR') %>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <th>Statut :</th>
+                  <td>
+                    <% if (instruction.lib_statut === 'Exécuté') { %>
+                    <span class="badge bg-success">
+                      <i class="fas fa-check me-1"></i>Exécuté
+                    </span>
+                    <% } else if (instruction.lib_statut === 'En Cours') { %>
+                    <span class="badge bg-warning">
+                      <i class="fas fa-clock me-1"></i>En cours
+                    </span>
+                    <% } else { %>
+                    <span class="badge bg-danger">
+                      <i class="fas fa-exclamation-triangle me-1"></i>En retard
+                    </span>
+                    <% } %>
+                  </td>
+                </tr>
+                <% if (instruction.date_execution) { %>
+                <tr>
+                  <th>Date d'exécution :</th>
+                  <td>
+                    <i class="fas fa-check-circle text-success me-1"></i>
+                    <%= new Date(instruction.date_execution).toLocaleDateString('fr-FR') %>
+                  </td>
+                </tr>
+                <% } %>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-primary">Acteurs</h6>
+              <table class="table table-sm">
+                <tr>
+                  <th width="40%">Émetteur :</th>
+                  <td>
+                    <div>
+                      <i class="fas fa-user-tie me-1"></i>
+                      <strong><%= instruction.emetteur_nom %> <%= instruction.emetteur_prenom %></strong>
+                    </div>
+                    <small class="text-muted">
+                      <i class="fas fa-envelope me-1"></i><%= instruction.emetteur_email %>
+                    </small>
+                    <% if (instruction.emetteur_pole) { %>
+                    <br>
+                    <small class="text-muted">
+                      <i class="fas fa-building me-1"></i><%= instruction.emetteur_pole %>
+                    </small>
+                    <% } %>
+                  </td>
+                </tr>
+                <tr>
+                  <th>Destinataire :</th>
+                  <td>
+                    <div>
+                      <i class="fas fa-user me-1"></i>
+                      <strong><%= instruction.destinataire_nom %> <%= instruction.destinataire_prenom %></strong>
+                    </div>
+                    <small class="text-muted">
+                      <i class="fas fa-envelope me-1"></i><%= instruction.destinataire_email %>
+                    </small>
+                    <% if (instruction.destinataire_pole) { %>
+                    <br>
+                    <small class="text-muted">
+                      <i class="fas fa-building me-1"></i><%= instruction.destinataire_pole %>
+                    </small>
+                    <% } %>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sujet -->
+          <div class="mb-4">
+            <h6 class="text-primary">Sujet</h6>
+            <div class="p-3 bg-light rounded">
+              <p class="mb-0 fw-bold"><%= instruction.sujet %></p>
+            </div>
+          </div>
+
+          <!-- Observations -->
+          <% if (instruction.observations) { %>
+          <div class="mb-4">
+            <h6 class="text-primary">Observations</h6>
+            <div class="p-3 bg-light rounded">
+              <p class="mb-0"><%= instruction.observations %></p>
+            </div>
+          </div>
+          <% } %>
+
+          <!-- Actions pour le destinataire -->
+          <% if (instruction.destinataire_id === user.id && instruction.lib_statut !== 'Exécuté') { %>
+          <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle me-2"></i>Action requise</h6>
+            <p class="mb-0">Cette instruction vous est destinée et attend votre exécution.</p>
+            <div class="mt-3">
+              <button class="btn btn-success" onclick="markAsExecuted(<%= instruction.id %>)">
+                <i class="fas fa-check me-1"></i>Marquer comme exécutée
+              </button>
+            </div>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Fonction pour marquer une instruction comme exécutée
+  function markAsExecuted(instructionId) {
+    if (confirm('Êtes-vous sûr de vouloir marquer cette instruction comme exécutée ?')) {
+      fetch(`/instructions/execute/${instructionId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert('Instruction marquée comme exécutée avec succès');
+            window.location.reload();
+          } else {
+            alert('Erreur: ' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Une erreur est survenue');
+        });
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,756 @@
+<!-- views/dashboard/gouverneur.ejs - Version modifiée avec panneaux d'axes et gestion des instructions -->
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Statistiques globales</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="card bg-primary text-white">
+              <div class="card-body">
+                <h5 class="card-title">Total Projets</h5>
+                <h3><%= stats.total_projets %></h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-success text-white">
+              <div class="card-body">
+                <h5 class="card-title">Coût Total (MDH)</h5>
+                <h3><%= stats.cout_total.toFixed(2) %></h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-info text-white">
+              <div class="card-body">
+                <h5 class="card-title">Emplois Directs</h5>
+                <h3><%= stats.total_emplois %></h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-warning text-white">
+              <div class="card-body">
+                <h5 class="card-title">Bénéficiaires</h5>
+                <h3><%= stats.total_beneficiaires %></h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Statistiques par Pôle</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Pôle</th>
+                <th>Nombre de Projets</th>
+                <th>Coût Total (MDH)</th>
+                <th>Emplois Directs</th>
+                <th>Bénéficiaires</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% polesStats.forEach(function(pole) { %>
+              <tr>
+                <td><%= pole.lib_pole %></td>
+                <td><%= pole.total_projets %></td>
+                <td><%= pole.cout_total.toFixed(2) %></td>
+                <td><%= pole.total_emplois %></td>
+                <td><%= pole.total_beneficiaires %></td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>-->
+
+<!-- ============================================= -->
+<!-- NOUVEAU: SECTION DES AXES SOUS FORME DE PANNEAUX CLIQUABLES -->
+<!-- ============================================= -->
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-sitemap me-2"></i>Axes de Projets
+        </h5>
+        <span class="badge bg-primary rounded-pill"><%= axesWithStats.length %> axes</span>
+      </div>
+      <div class="card-body">
+        <!-- Panneaux des axes -->
+        <div class="row" id="axes-panels">
+          <% axesWithStats.forEach(function(axe, index) { %>
+          <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card h-100 axe-card" data-axe-id="<%= axe.id %>" data-axe-name="<%= axe.lib_axe %>" style="cursor: pointer; transition: all 0.3s ease;">
+              <div class="card-header bg-gradient-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="card-title mb-0">
+                    <i class="fas fa-folder me-2"></i>Axe <%= axe.id %>
+                  </h6>
+                  <span class="badge bg-light text-primary rounded-pill">
+                    <%= axe.nb_projets %> projet<%= axe.nb_projets > 1 ? 's' : '' %>
+                  </span>
+                </div>
+              </div>
+              <div class="card-body">
+                <h6 class="text-primary mb-3"><%= axe.lib_axe %></h6>
+                <div class="row text-center">
+                  <div class="col-6 border-end">
+                    <div class="text-success fw-bold fs-5"><%= axe.cout_total.toFixed(1) %>M</div>
+                    <small class="text-muted">MDH</small>
+                  </div>
+                  <div class="col-6">
+                    <div class="text-info fw-bold fs-5"><%= axe.total_emplois.toLocaleString() %></div>
+                    <small class="text-muted">Emplois</small>
+                  </div>
+                </div>
+                <div class="row text-center mt-2">
+                  <div class="col-12">
+                    <div class="text-warning fw-bold fs-6"><%= axe.total_beneficiaires.toLocaleString() %></div>
+                    <small class="text-muted">Bénéficiaires</small>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">
+                    <i class="fas fa-building me-1"></i><%= axe.lib_pole %>
+                  </small>
+                  <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i>Voir projets
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+
+        <!-- Zone d'affichage des projets sélectionnés -->
+        <div id="selected-axe-projects" class="mt-4" style="display: none;">
+          <div class="card border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">
+                <i class="fas fa-list me-2"></i>Projets de l'axe : <span id="selected-axe-title"></span>
+              </h6>
+              <button class="btn btn-sm btn-light" id="close-projects-view">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="card-body">
+              <!-- Loading spinner -->
+              <div id="projects-loading" class="text-center py-4" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2 text-muted">Chargement des projets...</p>
+              </div>
+
+              <!-- Zone d'affichage des projets -->
+              <div id="projects-container">
+                <!-- Les projets seront chargés ici via AJAX -->
+              </div>
+
+              <!-- Message si aucun projet -->
+              <div id="no-projects-message" class="text-center py-4" style="display: none;">
+                <i class="fas fa-info-circle text-info fs-1"></i>
+                <p class="mt-2 text-muted">Aucun projet trouvé pour cet axe</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================= -->
+<!-- NOUVEAU: SECTION DES INSTRUCTIONS AVEC ACTIONS désctiver pour le moment-->
+<!-- ============================================= 
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <h5 class="mb-0 me-3">
+            <i class="fas fa-tasks me-2"></i>Gestion des Instructions
+          </h5>
+          <!-- Statistiques des instructions 
+          <div class="d-flex gap-3">
+            <span class="badge bg-success rounded-pill">
+              <i class="fas fa-check me-1"></i><%= instructionStats.executed %> Exécutées
+            </span>
+            <span class="badge bg-warning rounded-pill">
+              <i class="fas fa-clock me-1"></i><%= instructionStats.in_progress %> En cours
+            </span>
+            <span class="badge bg-danger rounded-pill">
+              <i class="fas fa-exclamation-triangle me-1"></i><%= instructionStats.overdue %> En retard
+            </span>
+          </div>
+        </div>
+
+        <!-- Boutons d'action 
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-success" id="btn-add-instruction">
+            <i class="fas fa-plus me-1"></i>Nouvelle instruction
+          </button>
+          <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="fas fa-filter me-1"></i>Filtrer
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#" data-filter="all">Toutes les instructions</a></li>
+            <li><a class="dropdown-item" href="#" data-filter="executed">Exécutées</a></li>
+            <li><a class="dropdown-item" href="#" data-filter="in_progress">En cours</a></li>
+            <li><a class="dropdown-item" href="#" data-filter="overdue">En retard</a></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li>
+              <div class="px-3 py-2">
+                <input type="text" class="form-control form-control-sm" id="search-instructions" placeholder="Rechercher...">
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Table des instructions 
+        <div class="table-responsive">
+          <table class="table table-striped" id="instructions-table">
+            <thead>
+              <tr>
+                <th>Numéro</th>
+                <th>Sujet</th>
+                <th>Destinataire</th>
+                <th>Date limite</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="instructions-tbody">
+              <% recentInstructions.forEach(function(instruction) { %>
+              <tr data-instruction-id="<%= instruction.id %>" data-status="<%= instruction.statut_id %>">
+                <td>
+                  <span class="fw-bold"><%= instruction.num_instruction %></span>
+                  <br>
+                  <small class="text-muted">
+                    <i class="fas fa-calendar me-1"></i>
+                    <%= new Date(instruction.date_instruction).toLocaleDateString('fr-FR') %>
+                  </small>
+                </td>
+                <td>
+                  <div class="fw-bold"><%= instruction.sujet %></div>
+                  <% if (instruction.observations) { %>
+                  <small class="text-muted">
+                    <i class="fas fa-comment me-1"></i><%= instruction.observations.substring(0, 50) %>...
+                  </small>
+                  <% } %>
+                </td>
+                <td>
+                  <div>
+                    <i class="fas fa-user me-1"></i>
+                    <%= instruction.destinataire_nom %> <%= instruction.destinataire_prenom %>
+                  </div>
+                </td>
+                <td>
+                  <span class="<%= instruction.status_color === 'danger' ? 'text-danger fw-bold' : instruction.status_color === 'warning' ? 'text-warning' : 'text-success' %>">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    <%= new Date(instruction.date_limite).toLocaleDateString('fr-FR') %>
+                  </span>
+                  <% if (instruction.date_execution) { %>
+                  <br>
+                  <small class="text-success">
+                    <i class="fas fa-check me-1"></i>
+                    Exécutée le <%= new Date(instruction.date_execution).toLocaleDateString('fr-FR') %>
+                  </small>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="badge bg-<%= instruction.status_color %>">
+                    <% if (instruction.lib_statut === 'Exécuté') { %>
+                    <i class="fas fa-check me-1"></i>
+                    <% } else if (instruction.lib_statut === 'En Cours') { %>
+                    <i class="fas fa-clock me-1"></i>
+                    <% } else { %>
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    <% } %>
+                    <%= instruction.lib_statut %>
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <% if (instruction.lib_statut !== 'Exécuté') { %>
+                    <!-- Bouton modifier 
+                    <button type="button" class="btn btn-outline-primary btn-edit-instruction" data-instruction-id="<%= instruction.id %>" title="Modifier l'instruction">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <!-- Bouton supprimer 
+                    <button type="button" class="btn btn-outline-danger btn-delete-instruction" data-instruction-id="<%= instruction.id %>" data-instruction-title="<%= instruction.sujet %>" title="Supprimer l'instruction">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                    <% } %>
+                    <!-- Bouton voir détails 
+                    <button type="button" class="btn btn-outline-info btn-view-instruction" data-instruction-id="<%= instruction.id %>" title="Voir les détails">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <% }); %>
+
+              <% if (recentInstructions.length === 0) { %>
+              <tr>
+                <td colspan="6" class="text-center py-4">
+                  <i class="fas fa-info-circle text-muted fs-1"></i>
+                  <p class="mt-2 text-muted">Aucune instruction trouvée</p>
+                  <button class="btn btn-primary" id="btn-add-first-instruction">
+                    <i class="fas fa-plus me-1"></i>Créer votre première instruction
+                  </button>
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================= -->
+<!-- MODALS -->
+<!-- ============================================= 
+<!-- Modal de confirmation de suppression d'instruction 
+<div class="modal fade" id="deleteInstructionModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>Confirmer la suppression
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Êtes-vous sûr de vouloir supprimer cette instruction ?</p>
+        <div class="alert alert-warning">
+          <strong id="instruction-to-delete-title"></strong>
+        </div>
+        <p class="text-danger"><i class="fas fa-warning me-1"></i>Cette action est irréversible.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-danger" id="confirm-delete-instruction">
+          <i class="fas fa-trash me-1"></i>Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+</div> -->
+
+<!-- ============================================= -->
+<!-- SCRIPTS JAVASCRIPT -->
+<!-- ============================================= -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // =============================================
+    // GESTION DES PANNEAUX D'AXES CLIQUABLES
+    // =============================================
+    const axeCards = document.querySelectorAll('.axe-card');
+    const selectedAxeProjectsSection = document.getElementById('selected-axe-projects');
+    const selectedAxeTitle = document.getElementById('selected-axe-title');
+    const projectsContainer = document.getElementById('projects-container');
+    const projectsLoading = document.getElementById('projects-loading');
+    const noProjectsMessage = document.getElementById('no-projects-message');
+    const closeProjectsView = document.getElementById('close-projects-view');
+
+    // Ajouter les effets hover sur les cartes d'axes
+    axeCards.forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-5px)';
+        this.style.boxShadow = '0 8px 25px rgba(0,123,255,0.15)';
+      });
+
+      card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = '';
+      });
+
+      // Gérer le clic sur une carte d'axe
+      card.addEventListener('click', function() {
+        const axeId = this.dataset.axeId;
+        const axeName = this.dataset.axeName;
+        loadProjectsByAxe(axeId, axeName);
+      });
+    });
+
+    // Fonction pour charger les projets par axe
+    async function loadProjectsByAxe(axeId, axeName) {
+      try {
+        // Réinitialiser l'état d'affichage
+        selectedAxeTitle.textContent = axeName;
+        selectedAxeProjectsSection.style.display = 'block';
+        projectsLoading.style.display = 'block';
+        projectsContainer.innerHTML = '';
+        noProjectsMessage.style.display = 'none';
+
+        // Faire défiler vers la section des projets
+        selectedAxeProjectsSection.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+
+        // Appel AJAX pour récupérer les projets
+        const response = await fetch(`/dashboard/api/projets-by-axe/${axeId}`);
+        const data = await response.json();
+
+        projectsLoading.style.display = 'none';
+
+        if (data.success && data.data.length > 0) {
+          displayProjects(data.data);
+        } else {
+          noProjectsMessage.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des projets:', error);
+        projectsLoading.style.display = 'none';
+        projectsContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Erreur lors du chargement des projets. Veuillez réessayer.
+                </div>
+            `;
+      }
+    }
+
+    // Fonction pour afficher les projets dans le conteneur
+    function displayProjects(projects) {
+      const projectsHtml = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Intitulé</th>
+                            <th>Secteur</th>
+                            <th>Coût (MDH)</th>
+                            <th>Emplois</th>
+                            <th>Période</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${projects.map(project => `
+                            <tr>
+                                <td>
+                                    <span class="badge bg-primary">${project.num_projet}</span>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-truncate" style="max-width: 300px;" title="${project.intitule}">
+                                        ${project.intitule}
+                                    </div>
+                                </td>
+                                <td>
+                                    <small class="text-muted">${project.lib_secteur}</small>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-success">
+                                        ${project.cout_total_mdh ? parseFloat(project.cout_total_mdh).toFixed(2) : '0.00'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-info">
+                                        ${project.nbr_emplois_directs || 0}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        ${project.annee_debut ? project.annee_debut : ''}
+                                        ${project.annee_fin ? '- ' + project.annee_fin : ''}
+                                    </small>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary btn-view-project"
+                                            data-project-id="${project.id}"
+                                            title="Voir les détails du projet">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+      projectsContainer.innerHTML = projectsHtml;
+
+      // Ajouter les événements pour les boutons "voir projet"
+      const viewProjectButtons = projectsContainer.querySelectorAll('.btn-view-project');
+      viewProjectButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const projectId = this.dataset.projectId;
+          // TODO: Rediriger vers la page de détail du projet
+          window.location.href = `/projects/view/${projectId}`;
+        });
+      });
+    }
+
+    // Bouton pour fermer la vue des projets
+    closeProjectsView.addEventListener('click', function() {
+      selectedAxeProjectsSection.style.display = 'none';
+    });
+
+    // =============================================
+    // GESTION DES INSTRUCTIONS
+    // =============================================
+
+    // Boutons d'ajout d'instruction
+    const btnAddInstruction = document.getElementById('btn-add-instruction');
+    const btnAddFirstInstruction = document.getElementById('btn-add-first-instruction');
+
+    if (btnAddInstruction) {
+      btnAddInstruction.addEventListener('click', function() {
+        window.location.href = '/instructions/add';
+      });
+    }
+
+    if (btnAddFirstInstruction) {
+      btnAddFirstInstruction.addEventListener('click', function() {
+        window.location.href = '/instructions/add';
+      });
+    }
+
+    // Gestion des filtres d'instructions
+    const filterDropdownItems = document.querySelectorAll('.dropdown-item[data-filter]');
+    const searchInstructions = document.getElementById('search-instructions');
+
+    filterDropdownItems.forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        const filter = this.dataset.filter;
+        filterInstructions(filter);
+      });
+    });
+
+    // Fonction pour filtrer les instructions
+    function filterInstructions(filter) {
+      const rows = document.querySelectorAll('#instructions-tbody tr[data-instruction-id]');
+      rows.forEach(row => {
+        const status = row.dataset.status;
+        let shouldShow = true;
+
+        switch (filter) {
+          case 'executed':
+            shouldShow = status === '1'; // Statut exécuté
+            break;
+          case 'in_progress':
+            shouldShow = status === '2'; // Statut en cours
+            break;
+          case 'overdue':
+            shouldShow = status === '3'; // Statut en retard
+            break;
+          case 'all':
+          default:
+            shouldShow = true;
+            break;
+        }
+
+        row.style.display = shouldShow ? '' : 'none';
+      });
+    }
+
+    // Recherche en temps réel dans les instructions
+    if (searchInstructions) {
+      searchInstructions.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#instructions-tbody tr[data-instruction-id]');
+
+        rows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+      });
+    }
+
+    // =============================================
+    // GESTION DES ACTIONS SUR LES INSTRUCTIONS
+    // =============================================
+
+    // Boutons d'édition d'instruction
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.btn-edit-instruction')) {
+        const instructionId = e.target.closest('.btn-edit-instruction').dataset.instructionId;
+        window.location.href = `/instructions/edit/${instructionId}`;
+      }
+
+      // Boutons de visualisation d'instruction
+      if (e.target.closest('.btn-view-instruction')) {
+        const instructionId = e.target.closest('.btn-view-instruction').dataset.instructionId;
+        window.location.href = `/instructions/view/${instructionId}`;
+      }
+
+      // Boutons de suppression d'instruction
+      if (e.target.closest('.btn-delete-instruction')) {
+        const button = e.target.closest('.btn-delete-instruction');
+        const instructionId = button.dataset.instructionId;
+        const instructionTitle = button.dataset.instructionTitle;
+
+        // Préparer le modal de confirmation
+        document.getElementById('instruction-to-delete-title').textContent = instructionTitle;
+        document.getElementById('confirm-delete-instruction').dataset.instructionId = instructionId;
+
+        // Afficher le modal
+        const modal = new bootstrap.Modal(document.getElementById('deleteInstructionModal'));
+        modal.show();
+      }
+    });
+
+    // Confirmation de suppression d'instruction
+    const confirmDeleteInstruction = document.getElementById('confirm-delete-instruction');
+    if (confirmDeleteInstruction) {
+      confirmDeleteInstruction.addEventListener('click', async function() {
+        const instructionId = this.dataset.instructionId;
+
+        try {
+          const response = await fetch(`/instructions/delete/${instructionId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            // Fermer le modal
+            bootstrap.Modal.getInstance(document.getElementById('deleteInstructionModal')).hide();
+
+            // Supprimer la ligne du tableau
+            const row = document.querySelector(`tr[data-instruction-id="${instructionId}"]`);
+            if (row) {
+              row.remove();
+            }
+
+            // Afficher un message de succès
+            showToast('Instruction supprimée avec succès', 'success');
+          } else {
+            showToast('Erreur lors de la suppression: ' + result.message, 'error');
+          }
+        } catch (error) {
+          console.error('Erreur lors de la suppression:', error);
+          showToast('Une erreur est survenue lors de la suppression', 'error');
+        }
+      });
+    }
+
+    // =============================================
+    // FONCTIONS UTILITAIRES
+    // =============================================
+
+    // Fonction pour afficher des notifications toast
+    function showToast(message, type = 'info') {
+      const toastContainer = document.getElementById('toast-container') || createToastContainer();
+
+      const toast = document.createElement('div');
+      toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0`;
+      toast.setAttribute('role', 'alert');
+
+      toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+
+      toastContainer.appendChild(toast);
+
+      const bsToast = new bootstrap.Toast(toast);
+      bsToast.show();
+
+      // Supprimer le toast après qu'il soit caché
+      toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+      });
+    }
+
+    // Créer le conteneur de toast s'il n'existe pas
+    function createToastContainer() {
+      const container = document.createElement('div');
+      container.id = 'toast-container';
+      container.className = 'toast-container position-fixed top-0 end-0 p-3';
+      container.style.zIndex = '1055';
+      document.body.appendChild(container);
+      return container;
+    }
+  });
+</script>
+
+<style>
+  /* Styles CSS personnalisés pour le dashboard gouverneur */
+  .axe-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+  }
+
+  .bg-gradient-primary {
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  }
+
+  .btn-group-sm>.btn,
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.2rem;
+  }
+
+  #selected-axe-projects {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+
+  .text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .toast-container {
+    z-index: 1055;
+  }
+</style>

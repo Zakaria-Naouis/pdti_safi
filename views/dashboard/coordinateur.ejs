@@ -1,0 +1,299 @@
+<% if (successMessage) { %>
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+  <%= successMessage %>
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+<% } %>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Statistiques de votre Pôle</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="card bg-primary text-white">
+              <div class="card-body">
+                <h5 class="card-title">Total Projets</h5>
+                <h3><%= stats.total_projets %></h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-success text-white">
+              <div class="card-body">
+                <h5 class="card-title">Coût Total (MDH)</h5>
+                <h3><%= stats.cout_total.toFixed(2) %></h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-info text-white">
+              <div class="card-body">
+                <h5 class="card-title">Emplois Directs</h5>
+                <h3><%= stats.total_emplois %></h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-warning text-white">
+              <div class="card-body">
+                <h5 class="card-title">Bénéficiaires</h5>
+                <h3><%= stats.total_beneficiaires %></h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Projets de votre Pôle</h5>
+        <div class="d-flex align-items-center">
+          <span class="badge bg-primary rounded-pill me-3"><%= pagination.totalItems %> projets</span>
+          <a href="/projects/add" class="btn btn-success">
+            <i class="fas fa-plus me-1"></i> Ajouter un projet
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Numéro</th>
+                <th>Intitulé</th>
+                <th>Axe</th>
+                <th>Secteur</th>
+                <th>Coût (MDH)</th>
+                <th>Emplois</th>
+                <th>Bénéficiaires</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% projects.forEach(function(project) { %>
+              <tr>
+                <td><%= project.num_projet %></td>
+                <td>
+                  <a href="/projects/edit/<%= project.id %>" class="text-decoration-none">
+                    <%= project.intitule %>
+                  </a>
+                </td>
+                <td><%= project.lib_axe %></td>
+                <td><%= project.lib_secteur %></td>
+                <td><%= project.cout_total_mdh %></td>
+                <td><%= project.nbr_emplois_directs %></td>
+                <td><%= project.nbr_beneficiaires %></td>
+                <td>
+                  <a href="/projects/edit/<%= project.id %>" class="btn btn-sm btn-primary me-1">
+                    <i class="fas fa-edit"></i> Modifier
+                  </a>
+                  <button class="btn btn-sm btn-danger delete-project" data-id="<%= project.id %>" data-title="<%= project.intitule %>">
+                    <i class="fas fa-trash"></i> Supprimer
+                  </button>
+                </td>
+              </tr>
+              <% }); %>
+              <% if (projects.length === 0) { %>
+              <tr>
+                <td colspan="8" class="text-center">Aucun projet trouvé</td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <% if (pagination.totalPages > 1) { %>
+        <nav aria-label="Pagination des projets">
+          <ul class="pagination justify-content-center">
+            <li class="page-item <%= !pagination.hasPrev ? 'disabled' : '' %>">
+              <a class="page-link" href="?page=1" tabindex="-1" aria-disabled="<%= !pagination.hasPrev %>">
+                <i class="fas fa-angle-double-left"></i>
+              </a>
+            </li>
+            <li class="page-item <%= !pagination.hasPrev ? 'disabled' : '' %>">
+              <a class="page-link" href="?page=<%= pagination.currentPage - 1 %>" tabindex="-1" aria-disabled="<%= !pagination.hasPrev %>">
+                <i class="fas fa-angle-left"></i> Précédent
+              </a>
+            </li>
+            <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+            <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
+              <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+            </li>
+            <% } %>
+            <li class="page-item <%= !pagination.hasNext ? 'disabled' : '' %>">
+              <a class="page-link" href="?page=<%= pagination.currentPage + 1 %>" aria-disabled="<%= !pagination.hasNext %>">
+                Suivant <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            <li class="page-item <%= !pagination.hasNext ? 'disabled' : '' %>">
+              <a class="page-link" href="?page=<%= pagination.totalPages %>" aria-disabled="<%= !pagination.hasNext %>">
+                <i class="fas fa-angle-double-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================= -->
+<!-- [COMMENTÉ] SECTION DES INSTRUCTIONS EN ATTENTE -->
+<!-- =============================================
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Instructions en attente (<%= pendingCount %>)</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Numéro</th>
+                <th>Sujet</th>
+                <th>Émetteur</th>
+                <th>Date Limite</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% pendingInstructions.forEach(function(instruction) { %>
+              <tr>
+                <td><%= instruction.num_instruction %></td>
+                <td><%= instruction.sujet %></td>
+                <td><%= instruction.emetteur_nom %> <%= instruction.emetteur_prenom %></td>
+                <td><%= new Date(instruction.date_limite).toLocaleDateString('fr-FR') %></td>
+                <td>
+                  <button class="btn btn-sm btn-success mark-executed" data-id="<%= instruction.id %>">
+                    Marquer comme exécuté
+                  </button>
+                </td>
+              </tr>
+              <% }); %>
+              <% if (pendingInstructions.length === 0) { %>
+              <tr>
+                <td colspan="5" class="text-center">Aucune instruction en attente</td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+-->
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Confirmer la suppression
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Êtes-vous sûr de vouloir supprimer ce projet ?</p>
+        <p class="fw-bold" id="projectTitle"></p>
+        <p class="text-danger">Cette action est irréversible.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">
+          <i class="fas fa-trash me-1"></i>Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de la suppression des projets
+    const deleteButtons = document.querySelectorAll('.delete-project');
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    let projectIdToDelete = null;
+
+    deleteButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        projectIdToDelete = this.getAttribute('data-id');
+        const projectTitle = this.getAttribute('data-title');
+        document.getElementById('projectTitle').textContent = projectTitle;
+        deleteModal.show();
+      });
+    });
+
+    document.getElementById('confirmDelete').addEventListener('click', function() {
+      if (projectIdToDelete) {
+        fetch(`/projects/delete/${projectIdToDelete}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              deleteModal.hide();
+              window.location.reload();
+            } else {
+              alert('Erreur lors de la suppression: ' + data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue lors de la suppression.');
+          });
+      }
+    });
+
+    // =============================================
+    // [COMMENTÉ] GESTION DES INSTRUCTIONS
+    // =============================================
+    /*
+    // Gestion des instructions
+    const markExecutedButtons = document.querySelectorAll('.mark-executed');
+    markExecutedButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const instructionId = this.getAttribute('data-id');
+        fetch(`/instructions/execute/${instructionId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('Instruction marquée comme exécutée avec succès');
+              location.reload();
+            } else {
+              alert('Erreur: ' + data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue');
+          });
+      });
+    });
+    */
+  });
+</script>

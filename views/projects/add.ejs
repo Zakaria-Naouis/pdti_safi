@@ -1,0 +1,1124 @@
+<!-- views/projects/add.ejs - Formulaire complet avec validation côté client -->
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Styles pour la validation */
+    .is-invalid {
+      border-color: #dc3545;
+    }
+
+    .is-valid {
+      border-color: #198754;
+    }
+
+    .validation-message {
+      display: none;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+    .validation-message.error {
+      color: #dc3545;
+      display: block;
+    }
+
+    .validation-message.success {
+      color: #198754;
+      display: block;
+    }
+
+    /* Indicateurs visuels pour les champs requis */
+    .required-field::after {
+      content: ' *';
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    /* Styles pour le formulaire */
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .form-section {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #e9ecef;
+    }
+
+    .section-title {
+      color: #495057;
+      border-bottom: 2px solid #e9ecef;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+    }
+
+    .navbar-custom {
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, .08);
+    }
+
+    .navbar-brand {
+      font-weight: 600;
+      color: #0d6efd !important;
+    }
+
+    .form-label {
+      font-weight: 500;
+      color: #495057;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-check-input:checked {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+
+    .alert {
+      border-radius: 8px;
+    }
+
+    /* Animation pour les messages de validation */
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-5px);
+      }
+
+      75% {
+        transform: translateX(5px);
+      }
+    }
+
+    .shake {
+      animation: shake 0.5s ease-in-out;
+    }
+
+    /* Loading spinner */
+    .spinner-border-sm {
+      width: 1rem;
+      height: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-custom mb-4">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-project-diagram me-2"></i>
+        PDTI Safi
+      </a>
+      <div class="d-flex">
+        <a href="<%= backUrl %>" class="btn btn-outline-secondary me-2">
+          <i class="fas fa-arrow-left me-1"></i> Retour
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid py-4">
+    <div class="row">
+      <div class="col-12">
+        <div class="card shadow">
+          <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h4 class="m-0 font-weight-bold text-primary">
+              <i class="fas fa-plus-circle me-2"></i><%= pageTitle %>
+            </h4>
+            <span class="badge bg-success rounded-pill">
+              Nouveau projet
+            </span>
+          </div>
+
+          <div class="card-body">
+            <!-- Messages d'erreur du serveur -->
+            <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+            <div class="alert alert-danger" id="server-errors">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <div>
+                  <h5 class="alert-heading">Erreurs de validation</h5>
+                  <ul class="mb-0">
+                    <% errors.forEach(function(error) { %>
+                    <li><%= error.msg %></li>
+                    <% }); %>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <% } %>
+
+            <!-- Message de validation général -->
+            <div class="alert alert-danger d-none" id="validation-summary">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <div>
+                  <h6 class="alert-heading mb-1">Veuillez corriger les erreurs suivantes :</h6>
+                  <ul id="validation-list" class="mb-0 small"></ul>
+                </div>
+              </div>
+            </div>
+
+            <form id="project-form" action="/projects/add" method="POST" novalidate>
+              <!-- Section: Informations générales -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-info-circle me-2"></i>Informations générales
+                </h5>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="num_projet" class="form-label required-field">Numéro de projet</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                      <input type="number" class="form-control" id="num_projet" name="num_projet" value="<%= project ? project.num_projet : '' %>" required min="1" max="99999" data-validate="required,unique-project">
+                      <div class="spinner-border spinner-border-sm text-primary d-none" id="num_projet_spinner"></div>
+                    </div>
+                    <div class="validation-message" id="num_projet_message"></div>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label for="intitule" class="form-label required-field">Intitulé du projet</label>
+                    <textarea class="form-control" id="intitule" name="intitule" rows="3" required minlength="10" maxlength="500" data-validate="required,minlength:10"><%= project ? project.intitule : '' %></textarea>
+                    <div class="validation-message" id="intitule_message"></div>
+                    <div class="form-text">
+                      <span id="intitule_count">0</span>/500 caractères
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="objectifs" class="form-label"> Détails Objectifs</label>
+                    <textarea class="form-control" id="objectifs" name="objectifs" rows="3" maxlength="1000"><%= project ? project.objectifs : '' %></textarea>
+                    <div class="form-text">
+                      <span id="objectifs_count">0</span>/1000 caractères
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label for="composantes" class="form-label">Composantes</label>
+                    <textarea class="form-control" id="composantes" name="composantes" rows="3" maxlength="1000"><%= project ? project.composantes : '' %></textarea>
+                    <div class="form-text">
+                      <span id="composantes_count">0</span>/1000 caractères
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12 mb-3">
+                    <label for="objectif_id" class="form-label">Objectif</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-bullseye"></i></span>
+                      <select class="form-select" id="objectif_id" name="objectif_id">
+                        <option value="">Sélectionner un objectif...</option>
+                        <% objectifs.forEach(function(objectif) { %>
+                        <option value="<%= objectif.id %>" data-axe="<%= objectif.axe_id %>" <%= project && project.objectif_id == objectif.id ? 'selected' : '' %>>
+                          <%= objectif.nom_objectif %>
+                        </option>
+                        <% }); %>
+                      </select>
+                    </div>
+                    <div class="form-text">L'objectif sera filtré selon l'axe sélectionné</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section: Caractéristiques techniques -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-cogs me-2"></i>Caractéristiques techniques
+                </h5>
+                <div class="row">
+                  <div class="col-md-4 mb-3">
+                    <label for="superficie_lineaire" class="form-label">Superficie / Linéaire</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-ruler-combined"></i></span>
+                      <input type="text" class="form-control" id="superficie_lineaire" name="superficie_lineaire" value="<%= project ? project.superficie_lineaire : '' %>" maxlength="100">
+                      <span class="input-group-text">m² / m</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label for="cout_total_mdh" class="form-label">Coût total (MDH)</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                      <input type="number" step="0.01" class="form-control" id="cout_total_mdh" name="cout_total_mdh" value="<%= project ? project.cout_total_mdh : '' %>" min="0" max="999999.99" data-validate="positive">
+                    </div>
+                    <div class="validation-message" id="cout_total_mdh_message"></div>
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label for="duree_mois" class="form-label">Durée (mois)</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                      <input type="number" class="form-control" id="duree_mois" name="duree_mois" value="<%= project ? project.duree_mois : '' %>" min="1" max="1200" data-validate="positive">
+                    </div>
+                    <div class="validation-message" id="duree_mois_message"></div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="annee_debut" class="form-label">Année de début</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-calendar-plus"></i></span>
+                      <input type="number" class="form-control" id="annee_debut" name="annee_debut" value="<%= project ? project.annee_debut : '' %>" min="2020" max="2050" data-validate="year-range">
+                    </div>
+                    <div class="validation-message" id="annee_debut_message"></div>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label for="annee_fin" class="form-label">Année de fin</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
+                      <input type="number" class="form-control" id="annee_fin" name="annee_fin" value="<%= project ? project.annee_fin : '' %>" min="2020" max="2050" data-validate="year-range,end-after-start">
+                    </div>
+                    <div class="validation-message" id="annee_fin_message"></div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-12 mb-3">
+                    <label for="echeancier" class="form-label">Échéancier</label>
+                    <input type="text" class="form-control" id="echeancier" name="echeancier" value="<%= project ? project.echeancier : '' %>" maxlength="100">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="detail_cout" class="form-label">Détail du coût</label>
+                  <textarea class="form-control" id="detail_cout" name="detail_cout" rows="2" maxlength="1000"><%= project ? project.detail_cout : '' %></textarea>
+                  <div class="form-text">
+                    <span id="detail_cout_count">0</span>/1000 caractères
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section: Impact socio-économique -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-chart-line me-2"></i>Impact socio-économique
+                </h5>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="nbr_emplois_directs" class="form-label">Nombre d'emplois directs</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-users"></i></span>
+                      <input type="number" class="form-control" id="nbr_emplois_directs" name="nbr_emplois_directs" value="<%= project ? project.nbr_emplois_directs : '' %>" min="0" max="999999" data-validate="positive-zero">
+                    </div>
+                    <div class="validation-message" id="nbr_emplois_directs_message"></div>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label for="nbr_beneficiaires" class="form-label">Nombre de bénéficiaires</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-user-friends"></i></span>
+                      <input type="number" class="form-control" id="nbr_beneficiaires" name="nbr_beneficiaires" value="<%= project ? project.nbr_beneficiaires : '' %>" min="0" max="9999999" data-validate="positive-zero">
+                    </div>
+                    <div class="validation-message" id="nbr_beneficiaires_message"></div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="detail_nbr_emploi" class="form-label">Détail des emplois</label>
+                    <textarea class="form-control" id="detail_nbr_emploi" name="detail_nbr_emploi" rows="2" maxlength="500"><%= project ? project.detail_nbr_emploi : '' %></textarea>
+                    <div class="form-text">
+                      <span id="detail_nbr_emploi_count">0</span>/500 caractères
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label for="detail_nbr_beneficiaires" class="form-label">Détail des bénéficiaires</label>
+                    <textarea class="form-control" id="detail_nbr_beneficiaires" name="detail_nbr_beneficiaires" rows="2" maxlength="500"><%= project ? project.detail_nbr_beneficiaires : '' %></textarea>
+                    <div class="form-text">
+                      <span id="detail_nbr_beneficiaires_count">0</span>/500 caractères
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section: Statut juridique et foncier -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-balance-scale me-2"></i>Statut juridique et foncier
+                </h5>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="statut_juridique_id" class="form-label">Statut juridique</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-gavel"></i></span>
+                      <select class="form-select" id="statut_juridique_id" name="statut_juridique_id">
+                        <option value="">Sélectionner...</option>
+                        <% statuts.forEach(function(statut) { %>
+                        <option value="<%= statut.id %>" <%= project && project.statut_juridique_id == statut.id ? 'selected' : '' %>><%= statut.lib_statut %></option>
+                        <% }); %>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label for="etude_etat" class="form-label">État de l'étude</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-clipboard-check"></i></span>
+                      <select class="form-select" id="etude_etat" name="etude_etat" disabled>
+                        <option value="">Sélectionner...</option>
+                        <option value="APS">APS</option>
+                        <option value="APD">APD</option>
+                        <option value="DE">DE</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-3 mb-3">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="fc_disponibilite" name="fc_disponibilite">
+                      <label class="form-check-label" for="fc_disponibilite">
+                        Foncier disponible
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-3 mb-3">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="fc_visibilite" name="fc_visibilite">
+                      <label class="form-check-label" for="fc_visibilite">
+                        Foncier visible
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-3 mb-3">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="fc_assiette_assine" name="fc_assiette_assine">
+                      <label class="form-check-label" for="fc_assiette_assine">
+                        Assiette assinée
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-3 mb-3">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="etude" name="etude">
+                      <label class="form-check-label" for="etude">
+                        Étude réalisée
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section: Localisation -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-map-marker-alt me-2"></i>Localisation
+                </h5>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="axe_id" class="form-label required-field">Axe</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-sitemap"></i></span>
+                      <select class="form-select" id="axe_id" name="axe_id" required data-validate="required">
+                        <option value="">Sélectionner...</option>
+                        <% axes.forEach(function(axe) { %>
+                        <option value="<%= axe.id %>" <%= project && project.axe_id == axe.id ? 'selected' : '' %>><%= axe.lib_axe %></option>
+                        <% }); %>
+                      </select>
+                    </div>
+                    <div class="validation-message" id="axe_id_message"></div>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label for="secteur_id" class="form-label required-field">Secteur</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-stream"></i></span>
+                      <select class="form-select" id="secteur_id" name="secteur_id" required data-validate="required">
+                        <option value="">Sélectionner...</option>
+                        <% secteurs.forEach(function(secteur) { %>
+                        <option value="<%= secteur.id %>" <%= project && project.secteur_id == secteur.id ? 'selected' : '' %>><%= secteur.lib_secteur %></option>
+                        <% }); %>
+                      </select>
+                    </div>
+                    <div class="validation-message" id="secteur_id_message"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section: Communes concernées -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-city me-2"></i>Communes concernées
+                </h5>
+                <div class="row" id="communes-container">
+                  <% communes.forEach(function(commune) { %>
+                  <div class="col-md-4 mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="communes" value="<%= commune.id %>" id="commune_<%= commune.id %>">
+                      <label class="form-check-label" for="commune_<%= commune.id %>">
+                        <%= commune.nom_fr %>
+                      </label>
+                    </div>
+                  </div>
+                  <% }); %>
+                </div>
+              </div>
+
+              <!-- Section: Acteurs -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-users-cog me-2"></i>Acteurs
+                </h5>
+                <div class="row">
+                  <div class="col-md-4 mb-3">
+                    <label for="moa_id" class="form-label">Maîtrise d'ouvrage (MOA)</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-building"></i></span>
+                      <select class="form-select" id="moa_id" name="moa_id">
+                        <option value="">Sélectionner...</option>
+                        <% moas.forEach(function(moa) { %>
+                        <option value="<%= moa.id %>" <%= project && project.moa_id == moa.id ? 'selected' : '' %>><%= moa.nom_moa %></option>
+                        <% }); %>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label for="moe_id" class="form-label">Maîtrise d'œuvre (MOE)</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-hard-hat"></i></span>
+                      <select class="form-select" id="moe_id" name="moe_id">
+                        <option value="">Sélectionner...</option>
+                        <% moes.forEach(function(moe) { %>
+                        <option value="<%= moe.id %>" <%= project && project.moe_id == moe.id ? 'selected' : '' %>><%= moe.nom_moe %></option>
+                        <% }); %>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label for="gestionnaire_projet_id" class="form-label">Gestionnaire de projet</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+                      <select class="form-select" id="gestionnaire_projet_id" name="gestionnaire_projet_id">
+                        <option value="">Sélectionner...</option>
+                        <% gestionnaires.forEach(function(gestionnaire) { %>
+                        <option value="<%= gestionnaire.id %>" <%= project && project.gestionnaire_projet_id == gestionnaire.id ? 'selected' : '' %>><%= gestionnaire.nom_gestionnaire %></option>
+                        <% }); %>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Boutons d'action -->
+              <div class="d-flex justify-content-between mt-4">
+                <div>
+                  <a href="<%= backUrl %>" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Retour
+                  </a>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-outline-primary me-2" id="validate-btn">
+                    <i class="fas fa-check-circle me-1"></i> Valider
+                  </button>
+                  <button type="submit" class="btn btn-primary" id="submit-btn">
+                    <i class="fas fa-save me-1"></i>
+                    <span class="btn-text">Enregistrer le projet</span>
+                    <div class="spinner-border spinner-border-sm d-none" role="status">
+                      <span class="visually-hidden">Chargement...</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script JavaScript pour la validation (identique au formulaire d'édition) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('project-form');
+      const submitBtn = document.getElementById('submit-btn');
+
+      // Configuration de validation
+      const ValidationConfig = {
+        messages: {
+          required: 'Ce champ est obligatoire',
+          minlength: 'Ce champ doit contenir au minimum {min} caractères',
+          maxlength: 'Ce champ doit contenir au maximum {max} caractères',
+          min: 'La valeur doit être supérieure ou égale à {min}',
+          max: 'La valeur doit être inférieure ou égale à {max}',
+          positive: 'La valeur doit être positive',
+          'positive-zero': 'La valeur doit être positive ou égale à zéro',
+          'year-range': 'L\'année doit être comprise entre 2020 et 2050',
+          'end-after-start': 'L\'année de fin doit être supérieure à l\'année de début',
+          'unique-project': 'Ce numéro de projet existe déjà',
+          email: 'Veuillez saisir une adresse email valide',
+          number: 'Veuillez saisir un nombre valide'
+        },
+        rules: {
+          required: function(value) {
+            return value && value.toString().trim() !== '';
+          },
+          minlength: function(value, min) {
+            return !value || value.toString().length >= parseInt(min);
+          },
+          maxlength: function(value, max) {
+            return !value || value.toString().length <= parseInt(max);
+          },
+          min: function(value, min) {
+            return !value || parseFloat(value) >= parseFloat(min);
+          },
+          max: function(value, max) {
+            return !value || parseFloat(value) <= parseFloat(max);
+          },
+          positive: function(value) {
+            return !value || parseFloat(value) > 0;
+          },
+          'positive-zero': function(value) {
+            return !value || parseFloat(value) >= 0;
+          },
+          'year-range': function(value) {
+            if (!value) return true;
+            const year = parseInt(value);
+            return year >= 2020 && year <= 2050;
+          },
+          'end-after-start': function(value) {
+            if (!value) return true;
+            const startYear = document.getElementById('annee_debut').value;
+            if (!startYear) return true;
+            return parseInt(value) >= parseInt(startYear);
+          },
+          email: function(value) {
+            if (!value) return true;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(value);
+          },
+          number: function(value) {
+            return !value || !isNaN(parseFloat(value));
+          }
+        }
+      };
+
+      // Fonction de validation d'un champ
+      function validateField(field, validationRules) {
+        const value = field.value.trim();
+        const errorDiv = field.parentElement.querySelector('.error-message') ||
+          field.parentElement.parentElement.querySelector('.error-message');
+
+        // Supprimer les anciens messages d'erreur
+        if (errorDiv) {
+          errorDiv.remove();
+        }
+
+        field.classList.remove('is-invalid', 'is-valid');
+
+        let isValid = true;
+        let errorMessage = '';
+
+        // Appliquer les règles de validation
+        for (const rule of validationRules) {
+          if (!rule.test(value)) {
+            isValid = false;
+            errorMessage = rule.message;
+            break;
+          }
+        }
+
+        // Afficher le résultat de la validation
+        if (!isValid) {
+          field.classList.add('is-invalid');
+          const errorElement = document.createElement('div');
+          errorElement.className = 'error-message text-danger mt-1';
+          errorElement.innerHTML = `<small><i class="fas fa-exclamation-triangle"></i> ${errorMessage}</small>`;
+          field.parentElement.appendChild(errorElement);
+        } else if (value !== '') {
+          field.classList.add('is-valid');
+        }
+
+        return isValid;
+      }
+
+      // MODIFICATION: Fonction de vérification d'unicité du numéro de projet
+      async function checkProjectNumberUniqueness(numProjet, field) {
+        if (!numProjet) return true;
+
+        const spinner = document.getElementById('num_projet_spinner');
+
+        try {
+          if (spinner) spinner.classList.remove('d-none');
+
+          // Récupérer l'ID du projet pour les modifications
+          const projectId = getProjectIdFromUrl();
+          const url = projectId ?
+            `/projects/api/check-project-number/${numProjet}?projectId=${projectId}` :
+            `/projects/api/check-project-number/${numProjet}`;
+
+          const response = await fetch(url);
+          const data = await response.json();
+
+          return !data.exists;
+        } catch (error) {
+          console.error('Erreur lors de la vérification:', error);
+          return true; // En cas d'erreur, on autorise pour ne pas bloquer
+        } finally {
+          if (spinner) spinner.classList.add('d-none');
+        }
+      }
+
+      // Fonction pour extraire l'ID du projet depuis l'URL (pour les modifications)
+      function getProjectIdFromUrl() {
+        const path = window.location.pathname;
+        const editMatch = path.match(/\/projects\/edit\/(\d+)/);
+        return editMatch ? editMatch[1] : null;
+      }
+
+      // Règles de validation par champ
+      const validationRules = {
+        num_projet: [{
+            test: (value) => value !== '',
+            message: 'Le numéro de projet est requis'
+          },
+          {
+            test: (value) => /^\d+$/.test(value),
+            message: 'Le numéro de projet doit être numérique'
+          },
+          {
+            test: (value) => parseInt(value) >= 1 && parseInt(value) <= 99999,
+            message: 'Le numéro de projet doit être entre 1 et 99999'
+          }
+        ],
+        intitule: [{
+            test: (value) => value !== '',
+            message: 'L\'intitulé du projet est requis'
+          },
+          {
+            test: (value) => value.length >= 10,
+            message: 'L\'intitulé doit contenir au moins 10 caractères'
+          },
+          {
+            test: (value) => value.length <= 500,
+            message: 'L\'intitulé ne peut pas dépasser 500 caractères'
+          }
+        ],
+        axe_id: [{
+          test: (value) => value !== '',
+          message: 'Veuillez sélectionner un axe'
+        }],
+        secteur_id: [{
+          test: (value) => value !== '',
+          message: 'Veuillez sélectionner un secteur'
+        }],
+        cout_total_mdh: [{
+          test: (value) => value === '' || (!isNaN(value) && parseFloat(value) >= 0),
+          message: 'Le coût total doit être un nombre positif'
+        }],
+        duree_mois: [{
+          test: (value) => value === '' || (!isNaN(value) && parseInt(value) > 0),
+          message: 'La durée doit être un nombre entier positif'
+        }],
+        annee_debut: [{
+          test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 2020 && parseInt(value) <= 2050),
+          message: 'L\'année de début doit être entre 2020 et 2050'
+        }],
+        annee_fin: [{
+          test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 2020 && parseInt(value) <= 2050),
+          message: 'L\'année de fin doit être entre 2020 et 2050'
+        }],
+        nbr_emplois_directs: [{
+          test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 0),
+          message: 'Le nombre d\'emplois doit être un nombre entier positif'
+        }],
+        nbr_beneficiaires: [{
+          test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 0),
+          message: 'Le nombre de bénéficiaires doit être un nombre entier positif'
+        }]
+      };
+
+      // Fonction de validation asynchrone pour les champs avec vérification serveur
+      async function validateFieldAsync(field, rules) {
+        // Validation classique d'abord
+        const isValidClassic = validateField(field, rules);
+
+        // Vérification spéciale pour le numéro de projet
+        if (field.id === 'num_projet' && isValidClassic && field.value.trim() !== '') {
+          const isUnique = await checkProjectNumberUniqueness(field.value.trim(), field);
+          if (!isUnique) {
+            field.classList.add('is-invalid');
+            field.classList.remove('is-valid');
+
+            const errorElement = document.createElement('div');
+            errorElement.className = 'error-message text-danger mt-1';
+            errorElement.innerHTML = '<small><i class="fas fa-exclamation-triangle"></i> Ce numéro de projet existe déjà</small>';
+            field.parentElement.appendChild(errorElement);
+            return false;
+          }
+        }
+
+        return isValidClassic;
+      }
+
+      // Ajouter la validation en temps réel
+      Object.keys(validationRules).forEach(fieldName => {
+        const field = document.getElementById(fieldName);
+        if (field) {
+          // Validation avec délai pour le numéro de projet
+          if (fieldName === 'num_projet') {
+            let timeout;
+            field.addEventListener('input', function() {
+              clearTimeout(timeout);
+              // Supprimer les classes d'erreur pendant la saisie
+              field.classList.remove('is-invalid', 'is-valid');
+              const errorDiv = field.parentElement.querySelector('.error-message');
+              if (errorDiv) errorDiv.remove();
+
+              timeout = setTimeout(() => {
+                validateFieldAsync(field, validationRules[fieldName]);
+              }, 500);
+            });
+
+            field.addEventListener('blur', function() {
+              clearTimeout(timeout);
+              validateFieldAsync(field, validationRules[fieldName]);
+            });
+          } else {
+            // Validation classique pour les autres champs
+            field.addEventListener('blur', function() {
+              validateField(field, validationRules[fieldName]);
+            });
+
+            field.addEventListener('input', function() {
+              // Supprimer les classes d'erreur pendant la saisie
+              field.classList.remove('is-invalid');
+              const errorDiv = field.parentElement.querySelector('.error-message');
+              if (errorDiv) errorDiv.remove();
+            });
+          }
+        }
+      });
+
+      // Gestion de la case "Étude réalisée"
+      const etudeCheckbox = document.getElementById('etude');
+      const etudeEtatSelect = document.getElementById('etude_etat');
+
+      if (etudeCheckbox && etudeEtatSelect) {
+        etudeCheckbox.addEventListener('change', function() {
+          etudeEtatSelect.disabled = !etudeCheckbox.checked;
+          if (!etudeCheckbox.checked) {
+            etudeEtatSelect.value = '';
+          }
+        });
+
+        // Initialiser l'état au chargement
+        etudeEtatSelect.disabled = !etudeCheckbox.checked;
+      }
+
+      // Validation des années (début/fin)
+      const anneeDebut = document.getElementById('annee_debut');
+      const anneeFin = document.getElementById('annee_fin');
+
+      if (anneeDebut && anneeFin) {
+        anneeDebut.addEventListener('input', function() {
+          validateField(anneeDebut, validationRules.annee_debut);
+          validateField(anneeFin, validationRules.annee_fin);
+        });
+      }
+
+      // Compteurs de caractères
+      function initCharCounters() {
+        const fieldsWithCounters = ['intitule', 'objectifs', 'composantes', 'detail_cout', 'detail_nbr_emploi', 'detail_nbr_beneficiaires'];
+
+        fieldsWithCounters.forEach(fieldId => {
+          const field = document.getElementById(fieldId);
+          const counter = document.getElementById(fieldId + '_count');
+
+          if (field && counter) {
+            function updateCounter() {
+              const length = field.value.length;
+              counter.textContent = length;
+
+              const maxLength = field.getAttribute('maxlength');
+              if (maxLength) {
+                const percentage = (length / parseInt(maxLength)) * 100;
+                counter.className = percentage > 90 ? 'text-danger fw-bold' :
+                  percentage > 80 ? 'text-warning' : '';
+              }
+            }
+
+            // Initialiser le compteur
+            updateCounter();
+
+            // Mettre à jour lors de la saisie
+            field.addEventListener('input', updateCounter);
+          }
+        });
+      }
+
+      // Validation lors de la soumission
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        let isFormValid = true;
+        const validationErrors = [];
+
+        // Valider tous les champs requis
+        const requiredFields = ['num_projet', 'intitule', 'axe_id', 'secteur_id'];
+
+        for (const fieldName of requiredFields) {
+          const field = document.getElementById(fieldName);
+          if (field) {
+            let isValid;
+            if (fieldName === 'num_projet') {
+              isValid = await validateFieldAsync(field, validationRules[fieldName]);
+            } else {
+              isValid = validateField(field, validationRules[fieldName]);
+            }
+
+            if (!isValid) {
+              isFormValid = false;
+              const fieldLabel = document.querySelector(`label[for="${fieldName}"]`)?.textContent || fieldName;
+              validationErrors.push(fieldLabel);
+            }
+          }
+        }
+
+        // Valider les champs optionnels s'ils sont remplis
+        const optionalFields = ['cout_total_mdh', 'duree_mois', 'annee_debut', 'annee_fin', 'nbr_emplois_directs', 'nbr_beneficiaires'];
+
+        optionalFields.forEach(fieldName => {
+          const field = document.getElementById(fieldName);
+          if (field && field.value.trim() !== '') {
+            const isValid = validateField(field, validationRules[fieldName]);
+            if (!isValid) {
+              isFormValid = false;
+              const fieldLabel = document.querySelector(`label[for="${fieldName}"]`)?.textContent || fieldName;
+              validationErrors.push(fieldLabel);
+            }
+          }
+        });
+
+        // Validation spéciale des années de début et fin
+        if (anneeDebut && anneeFin && anneeDebut.value && anneeFin.value) {
+          if (parseInt(anneeFin.value) < parseInt(anneeDebut.value)) {
+            const errorElement = document.createElement('div');
+            errorElement.className = 'error-message text-danger mt-1';
+            errorElement.innerHTML = '<small><i class="fas fa-exclamation-triangle"></i> L\'année de fin doit être supérieure à l\'année de début</small>';
+            anneeFin.parentElement.appendChild(errorElement);
+            anneeFin.classList.add('is-invalid');
+            isFormValid = false;
+            validationErrors.push('Années de début/fin');
+          }
+        }
+
+        // Afficher le résumé des erreurs
+        const validationSummary = document.getElementById('validation-summary');
+        const validationList = document.getElementById('validation-list');
+
+        if (!isFormValid) {
+          if (validationList) {
+            validationList.innerHTML = '';
+            validationErrors.forEach(error => {
+              const li = document.createElement('li');
+              li.textContent = error;
+              validationList.appendChild(li);
+            });
+          }
+
+          if (validationSummary) {
+            validationSummary.classList.remove('d-none');
+            validationSummary.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
+            });
+          }
+
+          // Faire défiler vers la première erreur
+          const firstError = document.querySelector('.is-invalid');
+          if (firstError) {
+            firstError.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
+            });
+            firstError.focus();
+          }
+
+          return;
+        }
+
+        // Si tout est valide, soumettre le formulaire
+        if (validationSummary) {
+          validationSummary.classList.add('d-none');
+        }
+
+        // Afficher le spinner
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          const btnText = submitBtn.querySelector('.btn-text');
+          const spinner = submitBtn.querySelector('.spinner-border');
+
+          if (btnText) btnText.textContent = 'Enregistrement...';
+          if (spinner) spinner.classList.remove('d-none');
+        }
+
+        // Soumettre le formulaire
+        form.submit();
+      });
+
+      // Bouton de validation manuelle
+      const validateBtn = document.getElementById('validate-btn');
+      if (validateBtn) {
+        validateBtn.addEventListener('click', async function() {
+          let isFormValid = true;
+
+          // Valider tous les champs
+          for (const fieldName of Object.keys(validationRules)) {
+            const field = document.getElementById(fieldName);
+            if (field) {
+              let isValid;
+              if (fieldName === 'num_projet') {
+                isValid = await validateFieldAsync(field, validationRules[fieldName]);
+              } else {
+                isValid = validateField(field, validationRules[fieldName]);
+              }
+
+              if (!isValid) {
+                isFormValid = false;
+              }
+            }
+          }
+
+          // Afficher le résultat
+          if (isFormValid) {
+            showSuccessMessage('Tous les champs sont valides !');
+          } else {
+            const firstError = document.querySelector('.is-invalid');
+            if (firstError) {
+              firstError.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+              });
+              firstError.focus();
+            }
+          }
+        });
+      }
+
+      // Fonction pour afficher un message de succès
+      function showSuccessMessage(message) {
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed top-0 end-0 p-3';
+        toast.style.zIndex = '1055';
+        toast.innerHTML = `
+      <div class="toast show" role="alert">
+        <div class="toast-header bg-success text-white">
+          <i class="fas fa-check-circle me-2"></i>
+          <strong class="me-auto">Validation</strong>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">${message}</div>
+      </div>
+    `;
+
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      }
+
+      // Initialiser les compteurs de caractères
+      initCharCounters();
+
+      // Gestionnaire d'erreurs global
+      window.addEventListener('error', function(event) {
+        if (event.error && event.error.message.includes('validation')) {
+          console.error('Erreur de validation:', event.error);
+
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            const btnText = submitBtn.querySelector('.btn-text');
+            const spinner = submitBtn.querySelector('.spinner-border');
+
+            if (btnText) btnText.textContent = form.action.includes('edit') ? 'Enregistrer les modifications' : 'Enregistrer le projet';
+            if (spinner) spinner.classList.add('d-none');
+          }
+        }
+      });
+
+      // Réactiver la soumission si l'utilisateur revient sur la page
+      window.addEventListener('pageshow', function(event) {
+        if (event.persisted && submitBtn) {
+          submitBtn.disabled = false;
+          const btnText = submitBtn.querySelector('.btn-text');
+          const spinner = submitBtn.querySelector('.spinner-border');
+
+          if (btnText) btnText.textContent = form.action.includes('edit') ? 'Enregistrer les modifications' : 'Enregistrer le projet';
+          if (spinner) spinner.classList.add('d-none');
+        }
+      });
+
+      console.log('Système de validation initialisé avec vérification d\'unicité conditionnelle');
+    });
+    ////// Filtrage des objectifs selon l'axe sélectionné
+    const axeSelect = document.getElementById('axe_id');
+    const objectifSelect = document.getElementById('objectif_id');
+
+    // Stocker tous les objectifs au chargement
+    const allObjectifs = Array.from(objectifSelect.options).slice(1); // Exclure l'option "Sélectionner..."
+
+    function filterObjectifs() {
+      const selectedAxeId = axeSelect.value;
+
+      // Réinitialiser le select des objectifs
+      objectifSelect.innerHTML = '<option value="">Sélectionner un objectif...</option>';
+
+      if (!selectedAxeId) {
+        // Si aucun axe n'est sélectionné, afficher tous les objectifs
+        allObjectifs.forEach(option => {
+          objectifSelect.appendChild(option.cloneNode(true));
+        });
+      } else {
+        // Filtrer les objectifs selon l'axe sélectionné
+        allObjectifs.forEach(option => {
+          if (option.getAttribute('data-axe') === selectedAxeId) {
+            objectifSelect.appendChild(option.cloneNode(true));
+          }
+        });
+      }
+    }
+
+    // Écouter les changements sur le select d'axe
+    if (axeSelect && objectifSelect) {
+      axeSelect.addEventListener('change', filterObjectifs);
+
+      // Filtrer au chargement si un axe est déjà sélectionné
+      if (axeSelect.value) {
+        filterObjectifs();
+      }
+    }
+  </script>
+</body>
+
+</html>

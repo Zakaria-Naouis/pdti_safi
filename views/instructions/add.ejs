@@ -1,0 +1,177 @@
+<%- include('../partials/header', { title: title }) %>
+
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-plus me-2"></i><%= pageTitle %>
+          </h5>
+          <a href="/dashboard/gouverneur" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Retour au tableau de bord
+          </a>
+        </div>
+        <div class="card-body">
+          <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+          <div class="alert alert-danger">
+            <h6><i class="fas fa-exclamation-triangle me-2"></i>Erreurs de validation</h6>
+            <ul class="mb-0">
+              <% errors.forEach(function(error) { %>
+              <li><%= error.msg %></li>
+              <% }); %>
+            </ul>
+          </div>
+          <% } %>
+          <form action="/instructions/add" method="POST" id="add-instruction-form">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="num_instruction" class="form-label">
+                    <i class="fas fa-hashtag me-1"></i>Numéro d'instruction
+                  </label>
+                  <input type="text" class="form-control" id="num_instruction" name="num_instruction" value="<%= instruction.num_instruction %>" readonly style="background-color: #f8f9fa;">
+                  <div class="form-text">Numéro généré automatiquement</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="date_instruction" class="form-label required">
+                    <i class="fas fa-calendar me-1"></i>Date d'instruction
+                  </label>
+                  <input type="date" class="form-control" id="date_instruction" name="date_instruction" value="<%= instruction.date_instruction %>" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="sujet" class="form-label required">
+                <i class="fas fa-subject me-1"></i>Sujet
+              </label>
+              <textarea class="form-control" id="sujet" name="sujet" rows="3" required maxlength="500" placeholder="Décrivez l'objet de l'instruction..."><%= instruction.sujet %></textarea>
+              <div class="form-text">
+                <span id="sujet_count">0</span>/500 caractères
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="date_limite" class="form-label required">
+                    <i class="fas fa-calendar-alt me-1"></i>Date limite
+                  </label>
+                  <input type="date" class="form-control" id="date_limite" name="date_limite" value="<%= instruction.date_limite %>" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="destinataire_id" class="form-label required">
+                    <i class="fas fa-user me-1"></i>Destinataire
+                  </label>
+                  <select class="form-select" id="destinataire_id" name="destinataire_id" required>
+                    <option value="">Sélectionner un destinataire</option>
+                    <% destinataires.forEach(function(destinataire) { %>
+                    <option value="<%= destinataire.id %>" <%= instruction.destinataire_id == destinataire.id ? 'selected' : '' %>>
+                      <%= destinataire.nom %> <%= destinataire.prenom %>
+                      (<%= destinataire.lib_profile %><% if (destinataire.lib_pole) { %> - <%= destinataire.lib_pole %><% } %>)
+                    </option>
+                    <% }); %>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="observations" class="form-label">
+                <i class="fas fa-comment me-1"></i>Observations
+              </label>
+              <textarea class="form-control" id="observations" name="observations" rows="4" maxlength="1000" placeholder="Observations complémentaires..."><%= instruction.observations %></textarea>
+              <div class="form-text">
+                <span id="observations_count">0</span>/1000 caractères
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="/dashboard/gouverneur" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Annuler
+              </a>
+              <button type="submit" class="btn btn-success">
+                <i class="fas fa-save me-1"></i>Enregistrer l'instruction
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Compteurs de caractères
+    const sujetField = document.getElementById('sujet');
+    const sujetCount = document.getElementById('sujet_count');
+    const observationsField = document.getElementById('observations');
+    const observationsCount = document.getElementById('observations_count');
+
+    function updateCharCount(field, counter) {
+      counter.textContent = field.value.length;
+      const maxLength = field.getAttribute('maxlength');
+      const percentage = (field.value.length / maxLength) * 100;
+
+      if (percentage > 90) {
+        counter.className = 'text-danger fw-bold';
+      } else if (percentage > 80) {
+        counter.className = 'text-warning';
+      } else {
+        counter.className = '';
+      }
+    }
+
+    // Initialiser les compteurs
+    updateCharCount(sujetField, sujetCount);
+    updateCharCount(observationsField, observationsCount);
+
+    // Événements pour les compteurs
+    sujetField.addEventListener('input', () => updateCharCount(sujetField, sujetCount));
+    observationsField.addEventListener('input', () => updateCharCount(observationsField, observationsCount));
+
+    // Validation de la date limite
+    const dateInstruction = document.getElementById('date_instruction');
+    const dateLimite = document.getElementById('date_limite');
+
+    function validateDateLimite() {
+      if (dateInstruction.value && dateLimite.value) {
+        if (new Date(dateLimite.value) <= new Date(dateInstruction.value)) {
+          dateLimite.setCustomValidity('La date limite doit être postérieure à la date d\'instruction');
+          dateLimite.classList.add('is-invalid');
+        } else {
+          dateLimite.setCustomValidity('');
+          dateLimite.classList.remove('is-invalid');
+        }
+      }
+    }
+
+    dateInstruction.addEventListener('change', validateDateLimite);
+    dateLimite.addEventListener('change', validateDateLimite);
+  });
+</script>
+
+<style>
+  .required::after {
+    content: ' *';
+    color: #dc3545;
+  }
+
+  .form-text {
+    font-size: 0.875rem;
+  }
+
+  #sujet_count,
+  #observations_count {
+    font-weight: 500;
+  }
+</style>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,106 @@
+<%- include('../partials/header', { title: title }) %>
+<%- include('../partials/navbar') %>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <h2><%= pageTitle %></h2>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-12">
+      <% if (user.profile_id === 4 || user.profile_id === 5) { %>
+      <a href="/projects/add" class="btn btn-primary">Ajouter un projet</a>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Numéro</th>
+                  <th>Intitulé</th>
+                  <th>Pôle</th>
+                  <th>Axe</th>
+                  <th>Secteur</th>
+                  <th>Coût (MDH)</th>
+                  <th>Emplois</th>
+                  <th>Bénéficiaires</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (projects && projects.length > 0) { %>
+                <% projects.forEach(function(project) { %>
+                <tr>
+                  <td><%= project.num_projet %></td>
+                  <td><%= project.intitule %></td>
+                  <td><%= project.lib_pole %></td>
+                  <td><%= project.lib_axe %></td>
+                  <td><%= project.lib_secteur %></td>
+                  <td><%= project.cout_total_mdh ? project.cout_total_mdh.toLocaleString() : 'N/A' %></td>
+                  <td><%= project.nbr_emplois_directs || 'N/A' %></td>
+                  <td><%= project.nbr_beneficiaires || 'N/A' %></td>
+                  <td>
+                    <a href="/projects/edit/<%= project.id %>" class="btn btn-warning btn-sm">Modifier</a>
+                    <% if (user.profile_id === 1) { %>
+                    <button class="btn btn-danger btn-sm delete-project" data-id="<%= project.id %>">Supprimer</button>
+                    <% } %>
+                  </td>
+                </tr>
+                <% }); %>
+                <% } else { %>
+                <tr>
+                  <td colspan="9" class="text-center">Aucun projet trouvé</td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-project');
+
+    deleteButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const projectId = this.getAttribute('data-id');
+
+        if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
+          fetch(`/projects/delete/${projectId}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert('Projet supprimé avec succès');
+                location.reload();
+              } else {
+                alert('Erreur lors de la suppression: ' + data.message);
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('Une erreur est survenue lors de la suppression.');
+            });
+        }
+      });
+    });
+  });
+</script>

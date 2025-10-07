@@ -1,0 +1,122 @@
+<%- include('partials/header', { title: title }) %>
+<%- include('partials/navbar') %>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <h2><%= pageTitle %></h2>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5>Informations Personnelles</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nom</label>
+            <p><%= user.nom %></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Prénom</label>
+            <p><%= user.prenom %></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Email</label>
+            <p><%= user.email %></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Profil</label>
+            <p>
+              <% if (user.profile_id === 1) { %>
+              Administrateur
+              <% } else if (user.profile_id === 2) { %>
+              Gouverneur
+              <% } else if (user.profile_id === 3) { %>
+              Secrétaire Général
+              <% } else if (user.profile_id === 4) { %>
+              Coordinateur
+              <% } else if (user.profile_id === 5) { %>
+              Chef de Pôle
+              <% } else { %>
+              Utilisateur
+              <% } %>
+            </p>
+          </div>
+          <% if (user.pole_id) { %>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Pôle</label>
+            <p><%= user.lib_pole %></p>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h5>Actions Rapides</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="card border-primary">
+                <div class="card-body text-center">
+                  <i class="fas fa-tachometer-alt fa-3x text-primary mb-3"></i>
+                  <h5>Tableau de bord</h5>
+                  <p>Accéder à votre tableau de bord</p>
+                  <a href="/dashboard" class="btn btn-primary">Accéder</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="card border-primary">
+                <div class="card-body text-center">
+                  <i class="fas fa-project-diagram fa-3x text-primary mb-3"></i>
+                  <h5>Projets</h5>
+                  <p>Gérer les projets</p>
+                  <a href="/projects" class="btn btn-primary">Accéder</a>
+                </div>
+              </div>
+            </div>
+            <% if (user.profile_id === 1 || user.profile_id === 2 || user.profile_id === 3) { %>
+            <div class="col-md-6 mb-3">
+              <div class="card border-primary">
+                <div class="card-body text-center">
+                  <i class="fas fa-tasks fa-3x text-primary mb-3"></i>
+                  <h5>Instructions</h5>
+                  <p>Gérer les instructions</p>
+                  <a href="/instructions" class="btn btn-primary">Accéder</a>
+                </div>
+              </div>
+            </div>
+            <% } %>
+            <div class="col-md-6 mb-3">
+              <div class="card border-primary">
+                <div class="card-body text-center">
+                  <i class="fas fa-download fa-3x text-primary mb-3"></i>
+                  <h5>Exporter</h5>
+                  <p>Télécharger les données</p>
+                  <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown">
+                      Exporter
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                      <li><a class="dropdown-item" href="/export/projects/axes">Projets par Axes</a></li>
+                      <li><a class="dropdown-item" href="/export/projects/secteurs">Projets par Secteurs</a></li>
+                      <li><a class="dropdown-item" href="/export/projects/communes">Projets par Communes</a></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

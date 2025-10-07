@@ -1,0 +1,39 @@
+{
+  "name": "pdti-safi",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pdti",
+    "safi",
+    "gestion de projets",
+    "developpement territorial"
+  ],
+  "author": "Zakaria Naouis",
+  "license": "ISC",
+  "description": "Application de gestion des projets de la PDTI de la province de Safi",
+  "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "bcrypt": "^6.0.0",
+    "bootstrap": "^5.3.8",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.2",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-ejs-layouts": "^2.5.1",
+    "express-rate-limit": "^8.1.0",
+    "express-validator": "^7.2.1",
+    "fast-csv": "^4.3.6",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
+    "pg": "^8.16.3",
+    "pg-hstore": "^2.3.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
