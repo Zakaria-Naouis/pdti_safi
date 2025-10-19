@@ -86,11 +86,11 @@
                 <td><%= project.num_projet %></td>
                 <td>
                   <a href="/projects/edit/<%= project.id %>" class="text-decoration-none">
-                    <%= project.intitule %>
+                    <%- project.intitule %>
                   </a>
                 </td>
-                <td><%= project.lib_axe %></td>
-                <td><%= project.lib_secteur %></td>
+                <td><%- project.lib_axe %></td>
+                <td><%- project.lib_secteur %></td>
                 <td><%= project.cout_total_mdh %></td>
                 <td><%= project.nbr_emplois_directs %></td>
                 <td><%= project.nbr_beneficiaires %></td>
@@ -98,7 +98,7 @@
                   <a href="/projects/edit/<%= project.id %>" class="btn btn-sm btn-primary me-1">
                     <i class="fas fa-edit"></i> Modifier
                   </a>
-                  <button class="btn btn-sm btn-danger delete-project" data-id="<%= project.id %>" data-title="<%= project.intitule %>">
+                  <button class="btn btn-sm btn-danger delete-project" data-id="<%= project.id %>" data-title="<%- project.intitule %>">
                     <i class="fas fa-trash"></i> Supprimer
                   </button>
                 </td>

@@ -20,23 +20,20 @@ const projectValidationRules = () => {
       .withMessage('L\'intitulé du projet est obligatoire')
       .isLength({ min: 10, max: 500 })
       .withMessage('L\'intitulé doit contenir entre 10 et 500 caractères')
-      .trim()
-      .escape(),
+      .trim(),
 
     // Validation des champs optionnels avec limites
     body('objectifs')
       .optional({ nullable: true, checkFalsy: true })
       .isLength({ max: 1000 })
       .withMessage('Les objectifs ne peuvent pas dépasser 1000 caractères')
-      .trim()
-      .escape(),
+      .trim(),
 
     body('composantes')
       .optional({ nullable: true, checkFalsy: true })
       .isLength({ max: 1000 })
       .withMessage('Les composantes ne peuvent pas dépasser 1000 caractères')
-      .trim()
-      .escape(),
+      .trim(),
 
     // Validation des champs numériques
     body('cout_total_mdh')
@@ -89,33 +86,34 @@ const projectValidationRules = () => {
       .isInt({ min: 1 })
       .withMessage('Veuillez sélectionner un secteur valide'),
 
-    // Validation des champs de texte avec limites
+    // Validation des champs de texte avec limites - CORRIGÉ: .escape() retiré
     body('detail_cout')
       .optional({ nullable: true, checkFalsy: true })
       .isLength({ max: 1000 })
       .withMessage('Le détail du coût ne peut pas dépasser 1000 caractères')
-      .trim()
-      .escape(),
+      .trim(),
 
     body('detail_nbr_emploi')
       .optional({ nullable: true, checkFalsy: true })
       .isLength({ max: 500 })
       .withMessage('Le détail des emplois ne peut pas dépasser 500 caractères')
-      .trim()
-      .escape(),
+      .trim(),
 
     body('detail_nbr_beneficiaires')
       .optional({ nullable: true, checkFalsy: true })
       .isLength({ max: 500 })
       .withMessage('Le détail des bénéficiaires ne peut pas dépasser 500 caractères')
-      .trim()
-      .escape(),
+      .trim(),
 
     body('superficie_lineaire')
       .optional({ nullable: true, checkFalsy: true })
+      .customSanitizer(value => {
+        // Nettoyer et convertir les valeurs vides en null
+        if (!value || value.trim() === '') return null;
+        return value.trim();
+      })
       .isLength({ max: 100 })
-      .withMessage('La superficie/linéaire ne peut pas dépasser 100 caractères')
-      .trim(),
+      .withMessage('La superficie/linéaire ne peut pas dépasser 100 caractères'),
 
     body('echeancier')
       .optional({ nullable: true, checkFalsy: true })
@@ -222,8 +220,7 @@ exports.getProjects = async (req, res) => {
   }
 };
 
-// Formulaire d'ajout de projet (inchangé)
-// Formulaire d'ajout de projet (modifié pour inclure les objectifs)
+// Formulaire d'ajout de projet (modifié pour inclure les objectifs ET le pôle)
 exports.getAddProject = async (req, res) => {
   try {
     let axesQuery = 'SELECT * FROM axes ORDER BY lib_axe ASC';
@@ -234,8 +231,8 @@ exports.getAddProject = async (req, res) => {
       axesParams = [req.user.pole_id];
     }
 
-    // MODIFICATION: Ajout de la récupération des objectifs
-    const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs] = await Promise.all([
+    // MODIFICATION: Ajout de la récupération des objectifs ET du pôle
+    const queries = [
       db.query(axesQuery, axesParams),
       db.query('SELECT * FROM secteurs ORDER BY lib_secteur ASC'),
       db.query('SELECT * FROM moa ORDER BY nom_moa ASC'),
@@ -243,8 +240,24 @@ exports.getAddProject = async (req, res) => {
       db.query('SELECT * FROM gestionnaires_projets ORDER BY nom_gestionnaire ASC'),
       db.query('SELECT * FROM statuts_juridiques ORDER BY lib_statut ASC'),
       db.query('SELECT * FROM communes ORDER BY nom_fr ASC'),
-      db.query('SELECT id, nom_objectif, axe_id FROM objectifs ORDER BY axe_id, nom_objectif ASC') // NOUVEAU
-    ]);
+      db.query('SELECT id, nom_objectif, axe_id FROM objectifs ORDER BY axe_id, nom_objectif ASC')
+    ];
+
+    // NOUVEAU: Ajouter la requête du pôle si l'utilisateur est coordinateur ou chef de pôle
+    if (req.user.profile_id === 4 || req.user.profile_id === 5) {
+      queries.push(
+        db.query('SELECT id, lib_pole FROM poles WHERE id = $1', [req.user.pole_id])
+      );
+    }
+
+    const results = await Promise.all(queries);
+
+    const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs] = results;
+    
+    // NOUVEAU: Récupérer les informations du pôle si disponibles
+    const poleInfo = (req.user.profile_id === 4 || req.user.profile_id === 5) && results[8] 
+      ? results[8].rows[0] 
+      : null;
 
     let backUrl = '/projects';
     if (req.user.profile_id === 4) {
@@ -263,7 +276,8 @@ exports.getAddProject = async (req, res) => {
       gestionnaires: gestionnaires.rows,
       statuts: statuts.rows,
       communes: communes.rows,
-      objectifs: objectifs.rows, // NOUVEAU
+      objectifs: objectifs.rows,
+      poleInfo: poleInfo, // NOUVEAU: Passer les infos du pôle à la vue
       errors: [],
       backUrl: backUrl,
       project: null,
@@ -315,8 +329,8 @@ exports.postAddProject = [
         axesParams = [req.user.pole_id];
       }
 
-      // MODIFICATION: Ajout de la récupération des objectifs
-      const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs] = await Promise.all([
+      // MODIFICATION: Ajout de la récupération des objectifs ET du pôle
+      const queries = [
         db.query(axesQuery, axesParams),
         db.query('SELECT * FROM secteurs ORDER BY lib_secteur ASC'),
         db.query('SELECT * FROM moa ORDER BY nom_moa ASC'),
@@ -324,8 +338,24 @@ exports.postAddProject = [
         db.query('SELECT * FROM gestionnaires_projets ORDER BY nom_gestionnaire ASC'),
         db.query('SELECT * FROM statuts_juridiques ORDER BY lib_statut ASC'),
         db.query('SELECT * FROM communes ORDER BY nom_fr ASC'),
-        db.query('SELECT id, nom_objectif, axe_id FROM objectifs ORDER BY axe_id, nom_objectif ASC') // NOUVEAU
-      ]);
+        db.query('SELECT id, nom_objectif, axe_id FROM objectifs ORDER BY axe_id, nom_objectif ASC')
+      ];
+
+      // NOUVEAU: Ajouter la requête du pôle si l'utilisateur est coordinateur ou chef de pôle
+      if (req.user.profile_id === 4 || req.user.profile_id === 5) {
+        queries.push(
+          db.query('SELECT id, lib_pole FROM poles WHERE id = $1', [req.user.pole_id])
+        );
+      }
+
+      const results = await Promise.all(queries);
+
+      const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs] = results;
+      
+      // NOUVEAU: Récupérer les informations du pôle si disponibles
+      const poleInfo = (req.user.profile_id === 4 || req.user.profile_id === 5) && results[8] 
+        ? results[8].rows[0] 
+        : null;
 
       let backUrl = '/projects';
       if (req.user.profile_id === 4) {
@@ -346,7 +376,8 @@ exports.postAddProject = [
         gestionnaires: gestionnaires.rows,
         statuts: statuts.rows,
         communes: communes.rows,
-        objectifs: objectifs.rows, // NOUVEAU
+        objectifs: objectifs.rows,
+        poleInfo: poleInfo, // NOUVEAU: Passer les infos du pôle à la vue
         backUrl: backUrl,
         user: req.user,
         app_name: process.env.APP_NAME || 'PDTI Safi',
@@ -383,6 +414,7 @@ exports.postAddProject = [
 ];
 
 // Formulaire de modification de projet (inchangé)
+// Formulaire de modification de projet
 exports.getEditProject = async (req, res) => {
   try {
     if (isNaN(req.params.id)) {
@@ -414,8 +446,8 @@ exports.getEditProject = async (req, res) => {
       axesParams = [req.user.pole_id];
     }
 
-   // MODIFICATION: Ajout de la récupération des objectifs
-    const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs] = await Promise.all([
+    // Récupération de toutes les données nécessaires incluant le pôle
+    const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs, poleInfo] = await Promise.all([
       db.query(axesQuery, axesParams),
       db.query('SELECT * FROM secteurs ORDER BY lib_secteur ASC'),
       db.query('SELECT * FROM moa ORDER BY nom_moa ASC'),
@@ -423,7 +455,15 @@ exports.getEditProject = async (req, res) => {
       db.query('SELECT * FROM gestionnaires_projets ORDER BY nom_gestionnaire ASC'),
       db.query('SELECT * FROM statuts_juridiques ORDER BY lib_statut ASC'),
       db.query('SELECT * FROM communes ORDER BY nom_fr ASC'),
-      db.query('SELECT id, nom_objectif, axe_id FROM objectifs ORDER BY axe_id, nom_objectif ASC') // NOUVEAU
+      db.query('SELECT id, nom_objectif, axe_id FROM objectifs ORDER BY axe_id, nom_objectif ASC'),
+      // Récupérer le pôle du projet via l'axe
+      db.query(`
+        SELECT p.lib_pole, p.id as pole_id
+        FROM projets pr
+        JOIN axes a ON pr.axe_id = a.id
+        JOIN poles p ON a.pole_id = p.id
+        WHERE pr.id = $1
+      `, [req.params.id])
     ]);
 
     const projectCommunes = await Project.getProjectCommunes(req.params.id);
@@ -446,8 +486,9 @@ exports.getEditProject = async (req, res) => {
       gestionnaires: gestionnaires.rows,
       statuts: statuts.rows,
       communes: communes.rows,
-      objectifs: objectifs.rows, // NOUVEAU
+      objectifs: objectifs.rows,
       projectCommunes: projectCommunes,
+      poleInfo: poleInfo.rows[0] || null,
       errors: [],
       backUrl: backUrl,
       user: req.user,
@@ -467,6 +508,7 @@ exports.getEditProject = async (req, res) => {
   }
 };
 
+// MODIFICATION: Modifier un projet avec vérification d'unicité conditionnelle
 // MODIFICATION: Modifier un projet avec vérification d'unicité conditionnelle
 exports.postEditProject = [
   ...projectValidationRules(),
@@ -513,8 +555,8 @@ exports.postEditProject = [
           axesParams = [req.user.pole_id];
         }
 
-        // MODIFICATION: Ajout de la récupération des objectifs
-        const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs] = await Promise.all([
+        // Récupération de toutes les données incluant le pôle
+        const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs, poleInfo] = await Promise.all([
           db.query(axesQuery, axesParams),
           db.query('SELECT * FROM secteurs ORDER BY lib_secteur ASC'),
           db.query('SELECT * FROM moa ORDER BY nom_moa ASC'),
@@ -522,7 +564,15 @@ exports.postEditProject = [
           db.query('SELECT * FROM gestionnaires_projets ORDER BY nom_gestionnaire ASC'),
           db.query('SELECT * FROM statuts_juridiques ORDER BY lib_statut ASC'),
           db.query('SELECT * FROM communes ORDER BY nom_fr ASC'),
-          db.query('SELECT id, nom_objectif, axe_id FROM objectifs ORDER BY axe_id, nom_objectif ASC') // NOUVEAU
+          db.query('SELECT id, nom_objectif, axe_id FROM objectifs ORDER BY axe_id, nom_objectif ASC'),
+          // Récupérer le pôle du projet
+          db.query(`
+            SELECT p.lib_pole, p.id as pole_id
+            FROM projets pr
+            JOIN axes a ON pr.axe_id = a.id
+            JOIN poles p ON a.pole_id = p.id
+            WHERE pr.id = $1
+          `, [projectId])
         ]);
 
         const projectCommunes = await Project.getProjectCommunes(projectId);
@@ -546,8 +596,9 @@ exports.postEditProject = [
           gestionnaires: gestionnaires.rows,
           statuts: statuts.rows,
           communes: communes.rows,
-          objectifs: objectifs.rows, // NOUVEAU
+          objectifs: objectifs.rows,
           projectCommunes: projectCommunes,
+          poleInfo: poleInfo.rows[0] || null,
           backUrl: backUrl,
           user: req.user,
           app_name: process.env.APP_NAME || 'PDTI Safi',
@@ -584,14 +635,24 @@ exports.postEditProject = [
         axesParams = [req.user.pole_id];
       }
 
-      const [axes, secteurs, moas, moes, gestionnaires, statuts, communes] = await Promise.all([
+      // Récupération de toutes les données incluant le pôle pour le catch
+      const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs, poleInfo] = await Promise.all([
         db.query(axesQuery, axesParams),
         db.query('SELECT * FROM secteurs ORDER BY lib_secteur ASC'),
         db.query('SELECT * FROM moa ORDER BY nom_moa ASC'),
         db.query('SELECT * FROM moe ORDER BY nom_moe ASC'),
         db.query('SELECT * FROM gestionnaires_projets ORDER BY nom_gestionnaire ASC'),
         db.query('SELECT * FROM statuts_juridiques ORDER BY lib_statut ASC'),
-        db.query('SELECT * FROM communes ORDER BY nom_fr ASC')
+        db.query('SELECT * FROM communes ORDER BY nom_fr ASC'),
+        db.query('SELECT id, nom_objectif, axe_id FROM objectifs ORDER BY axe_id, nom_objectif ASC'),
+        // Récupérer le pôle du projet
+        db.query(`
+          SELECT p.lib_pole, p.id as pole_id
+          FROM projets pr
+          JOIN axes a ON pr.axe_id = a.id
+          JOIN poles p ON a.pole_id = p.id
+          WHERE pr.id = $1
+        `, [projectId])
       ]);
 
       const projectCommunes = await Project.getProjectCommunes(projectId);
@@ -614,7 +675,9 @@ exports.postEditProject = [
         gestionnaires: gestionnaires.rows,
         statuts: statuts.rows,
         communes: communes.rows,
+        objectifs: objectifs.rows,
         projectCommunes: projectCommunes,
+        poleInfo: poleInfo.rows[0] || null,
         errors: [{ msg: 'Une erreur est survenue lors de la modification du projet: ' + error.message }],
         backUrl: backUrl,
         user: req.user,
@@ -719,7 +782,8 @@ function processProjectData(data) {
     detail_cout: data.detail_cout ? data.detail_cout.trim() : null,
     detail_nbr_emploi: data.detail_nbr_emploi ? data.detail_nbr_emploi.trim() : null,
     detail_nbr_beneficiaires: data.detail_nbr_beneficiaires ? data.detail_nbr_beneficiaires.trim() : null,
-    superficie_lineaire: data.superficie_lineaire ? data.superficie_lineaire.trim() : null,
+    superficie_lineaire: data.superficie_lineaire && data.superficie_lineaire.trim() !== '' ? 
+    data.superficie_lineaire.trim() : null,
     echeancier: data.echeancier ? data.echeancier.trim() : null
   };
 }

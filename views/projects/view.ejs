@@ -467,48 +467,93 @@ var communeText = communeCount > 1 ? 'communes' : 'commune';
 </div>
 <% } %>
 
-<!-- Projets similaires -->
-<% if (similarProjects && similarProjects.length > 0) { %>
+<!-- ============================================= -->
+<!-- SECTION: TOUS LES PROJETS DE L'AXE -->
+<!-- ============================================= -->
+<% if (axeProjects && axeProjects.length > 0) { %>
 <div class="row mt-4">
   <div class="col-md-12">
-    <div class="card">
-      <div class="card-header">
+    <div class="card" id="axe-projects-section">
+      <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-          <i class="fas fa-search me-2"></i>Projets Similaires
+          <i class="fas fa-list me-2"></i>Tous les projets de l'axe :
+          <span class="text-primary"><%- decodeHTMLEntities(project.lib_axe) %></span>
         </h5>
+        <span class="badge bg-primary rounded-pill">
+          <%= axeProjects.length %> projet<%= axeProjects.length > 1 ? 's' : '' %>
+        </span>
       </div>
       <div class="card-body">
-        <div class="row">
-          <% similarProjects.forEach(function(similarProject) { %>
-          <div class="col-md-6 mb-3">
-            <div class="card border-left-primary h-100">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <span class="badge bg-primary">N° <%= similarProject.num_projet %></span>
-                  <small class="text-muted">
-                    <%= similarProject.cout_total_mdh ? parseFloat(similarProject.cout_total_mdh).toFixed(1) : '0' %> MDH
-                  </small>
-                </div>
-                <h6 class="card-title">
-                  <a href="/projects/view/<%= similarProject.id %>" class="text-decoration-none">
+        <div class="table-responsive">
+          <table class="table table-hover" id="axe-projects-table">
+            <thead class="table-light">
+              <tr>
+                <th>N°</th>
+                <th>Intitulé</th>
+                <th>Secteur</th>
+                <th class="text-end">Coût (MDH)</th>
+                <th class="text-end">Emplois</th>
+                <th>Période</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% axeProjects.forEach(function(axeProject) { 
+                const isCurrentProject = axeProject.id === project.id;
+                const rowClass = isCurrentProject ? 'table-primary fw-bold' : '';
+              %>
+              <tr class="<%= rowClass %>" data-project-id="<%= axeProject.id %>">
+                <td>
+                  <span class="badge bg-<%= isCurrentProject ? 'success' : 'primary' %>">
+                    <%= axeProject.num_projet %>
+                    <% if (isCurrentProject) { %>
+                    <i class="fas fa-eye ms-1" title="Projet actuellement affiché"></i>
+                    <% } %>
+                  </span>
+                </td>
+                <td>
+                  <div class="<%= isCurrentProject ? 'fw-bold' : '' %>" style="max-width: 400px;">
                     <%
-var titleText = decodeHTMLEntities(similarProject.intitule);
-if (titleText && titleText.length > 60) {
-titleText = titleText.substring(0, 60) + '...';
-}
-%>
-                    <%- titleText %>
-                  </a>
-                </h6>
-                <div class="small text-muted">
-                  <i class="fas fa-folder me-1"></i><%- decodeHTMLEntities(similarProject.lib_axe) %>
-                  <br>
-                  <i class="fas fa-tag me-1"></i><%- decodeHTMLEntities(similarProject.lib_secteur) %>
-                </div>
-              </div>
-            </div>
-          </div>
-          <% }); %>
+                      var titleText = decodeHTMLEntities(axeProject.intitule);
+                      var displayTitle = titleText.length > 80 ? titleText.substring(0, 80) + '...' : titleText;
+                    %>
+                    <%= displayTitle %>
+                  </div>
+                </td>
+                <td>
+                  <small class="text-muted"><%- decodeHTMLEntities(axeProject.lib_secteur) %></small>
+                </td>
+                <td class="text-end">
+                  <span class="fw-bold text-success">
+                    <%= axeProject.cout_total_mdh ? parseFloat(axeProject.cout_total_mdh).toFixed(2) : '0.00' %>
+                  </span>
+                </td>
+                <td class="text-end">
+                  <span class="text-info">
+                    <%= axeProject.nbr_emplois_directs ? parseInt(axeProject.nbr_emplois_directs).toLocaleString('fr-FR') : '0' %>
+                  </span>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <%= axeProject.annee_debut ? axeProject.annee_debut : '' %>
+                    <%= axeProject.annee_fin ? '- ' + axeProject.annee_fin : '' %>
+                  </small>
+                </td>
+                <td class="text-center">
+                  <% if (!isCurrentProject) { %>
+                  <button class="btn btn-sm btn-outline-primary btn-view-axe-project" data-project-id="<%= axeProject.id %>" title="Voir les détails de ce projet">
+                    <i class="fas fa-eye me-1"></i>Voir
+                  </button>
+                  <% } else { %>
+                  <span class="badge bg-success">
+                    <i class="fas fa-check me-1"></i>Affiché
+                  </span>
+                  <% } %>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -768,10 +813,10 @@ titleText = titleText.substring(0, 60) + '...';
   }
 </style>
 
+
 <script>
   // ========================================
-  // JAVASCRIPT COMPLET POUR view.ejs
-  // À PLACER DANS LA BALISE <script>
+  // JAVASCRIPT COMPLET POUR view.ejs - VERSION CORRIGÉE
   // ========================================
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -827,33 +872,24 @@ titleText = titleText.substring(0, 60) + '...';
     const objectifDetails = document.querySelectorAll('.objectif-details');
 
     objectifDetails.forEach(detail => {
-
       // Fonction pour vérifier si le contenu est scrollable
       function checkScroll() {
         if (detail.scrollHeight > detail.clientHeight) {
           detail.classList.add('has-scroll');
         } else {
           detail.classList.remove('has-scroll');
-          // Masquer la scrollbar si le contenu ne dépasse pas
           detail.style.overflowY = 'hidden';
         }
       }
 
-      // Vérifier au chargement initial
       checkScroll();
-
-      // Vérifier lors du redimensionnement de la fenêtre
       window.addEventListener('resize', checkScroll);
 
-      // Gérer l'indicateur de gradient lors du scroll
       detail.addEventListener('scroll', function() {
         const isAtBottom = detail.scrollTop + detail.clientHeight >= detail.scrollHeight - 5;
-
         if (isAtBottom) {
-          // On est en bas, masquer l'indicateur
           detail.classList.remove('has-scroll');
         } else {
-          // On n'est pas en bas, afficher l'indicateur si nécessaire
           if (detail.scrollHeight > detail.clientHeight) {
             detail.classList.add('has-scroll');
           }
@@ -867,12 +903,10 @@ titleText = titleText.substring(0, 60) + '...';
     const objectifContent = document.querySelectorAll('.objectif-content');
 
     objectifContent.forEach(content => {
-      // Si le contenu ne dépasse pas, masquer la scrollbar
       if (content.scrollHeight <= content.clientHeight) {
         content.style.overflowY = 'hidden';
       }
 
-      // Vérifier lors du redimensionnement
       window.addEventListener('resize', function() {
         if (content.scrollHeight <= content.clientHeight) {
           content.style.overflowY = 'hidden';
@@ -882,12 +916,167 @@ titleText = titleText.substring(0, 60) + '...';
       });
     });
 
-  });
+    // ==========================================
+    // 7. NAVIGATION ENTRE PROJETS DE L'AXE
+    // ==========================================
+    const viewProjectButtons = document.querySelectorAll('.btn-view-axe-project');
+
+    viewProjectButtons.forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        const projectId = this.dataset.projectId;
+
+        // Afficher un loader
+        showLoader();
+
+        // Rediriger vers le projet avec le paramètre axe=true
+        window.location.href = `/projects/view/${projectId}?axe=true`;
+      });
+    });
+
+    // ==========================================
+    // 8. RETOUR AU DASHBOARD
+    // ==========================================
+    const btnRetourDashboard = document.querySelector('a[href="/dashboard"]');
+    if (btnRetourDashboard) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromAxe = urlParams.get('axe') === 'true';
+
+      if (fromAxe) {
+        btnRetourDashboard.href = '/dashboard/gouverneur';
+        btnRetourDashboard.innerHTML = '<i class="fas fa-arrow-left me-1"></i>Retour au Dashboard';
+      }
+    }
+
+    // ==========================================
+    // 9. AUTO-SCROLL VERS LE PROJET AFFICHÉ
+    // ==========================================
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('axe') === 'true') {
+      setTimeout(() => {
+        const axeProjectsSection = document.getElementById('axe-projects-section');
+        if (axeProjectsSection) {
+          axeProjectsSection.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+
+          const currentProjectRow = document.querySelector('.table-primary');
+          if (currentProjectRow) {
+            currentProjectRow.style.animation = 'highlight 2s ease-in-out';
+          }
+        }
+      }, 1000);
+    }
+
+    // ==========================================
+    // 10. HIGHLIGHT AU SURVOL DES LIGNES
+    // ==========================================
+    const projectRows = document.querySelectorAll('#axe-projects-table tbody tr');
+    projectRows.forEach(row => {
+      if (!row.classList.contains('table-primary')) {
+        row.addEventListener('mouseenter', function() {
+          this.style.backgroundColor = 'rgba(13, 110, 253, 0.05)';
+        });
+
+        row.addEventListener('mouseleave', function() {
+          this.style.backgroundColor = '';
+        });
+      }
+    });
+
+  }); // FIN du DOMContentLoaded - UN SEUL !
 
   // ==========================================
-  // FONCTION GLOBALE POUR IMPRIMER LE PROJET
+  // FONCTIONS GLOBALES (en dehors du DOMContentLoaded)
   // ==========================================
+
+  function showLoader() {
+    const loader = document.createElement('div');
+    loader.id = 'page-loader';
+    loader.innerHTML = `
+      <div class="loader-content">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p class="mt-3 text-primary">Chargement du projet...</p>
+      </div>
+    `;
+    document.body.appendChild(loader);
+  }
+
   function printProject() {
     window.print();
   }
 </script>
+
+<!-- Styles CSS supplémentaires pour le loader et les animations -->
+<style>
+  /* Loader overlay */
+  #page-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+
+  .loader-content {
+    text-align: center;
+  }
+
+  /* Animation pour le highlight du projet actuel */
+  @keyframes highlight {
+
+    0%,
+    100% {
+      background-color: inherit;
+    }
+
+    50% {
+      background-color: rgba(25, 135, 84, 0.2);
+    }
+  }
+
+  /* Style pour la ligne du projet actuel */
+  .table-primary {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+  }
+
+  /* Amélioration du style du bouton Voir */
+  .btn-view-axe-project {
+    transition: all 0.3s ease;
+  }
+
+  .btn-view-axe-project:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+  }
+
+  /* Style pour les badges de numéro de projet */
+  .table tbody .badge {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  /* Animation au hover des lignes du tableau */
+  #axe-projects-table tbody tr {
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  #axe-projects-table tbody tr:not(.table-primary):hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateX(5px);
+  }
+
+  /* Style pour le scroll vers la section */
+  #axe-projects-section {
+    scroll-margin-top: 20px;
+  }
+</style>

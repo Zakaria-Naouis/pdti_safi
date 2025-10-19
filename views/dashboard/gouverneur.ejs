@@ -401,9 +401,15 @@
       });
     });
 
-    // Fonction pour charger les projets par axe
+    // ==========================================
+    // FONCTION POUR CHARGER LES PROJETS PAR AXE
+    // ==========================================
     async function loadProjectsByAxe(axeId, axeName) {
       try {
+        console.log('=== DEBUG loadProjectsByAxe ===');
+        console.log('1. axeId:', axeId);
+        console.log('2. axeName:', axeName);
+
         // Réinitialiser l'état d'affichage
         selectedAxeTitle.textContent = axeName;
         selectedAxeProjectsSection.style.display = 'block';
@@ -417,88 +423,107 @@
           block: 'start'
         });
 
+        console.log('3. URL de la requête:', `/dashboard/api/projets-by-axe/${axeId}`);
+
         // Appel AJAX pour récupérer les projets
         const response = await fetch(`/dashboard/api/projets-by-axe/${axeId}`);
+
+        console.log('4. Status de la réponse:', response.status);
+        console.log('5. Response OK?:', response.ok);
+
         const data = await response.json();
+
+        console.log('6. Données reçues:', data);
+        console.log('7. Success?:', data.success);
+        console.log('8. Nombre de projets:', data.data ? data.data.length : 0);
 
         projectsLoading.style.display = 'none';
 
-        if (data.success && data.data.length > 0) {
+        if (data.success && data.data && data.data.length > 0) {
+          console.log('9. Affichage des projets...');
           displayProjects(data.data);
         } else {
+          console.log('10. Aucun projet trouvé');
           noProjectsMessage.style.display = 'block';
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des projets:', error);
+        console.error('=== ERREUR loadProjectsByAxe ===');
+        console.error('Erreur complète:', error);
+        console.error('Stack:', error.stack);
+
         projectsLoading.style.display = 'none';
         projectsContainer.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Erreur lors du chargement des projets. Veuillez réessayer.
-                </div>
-            `;
+          <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Erreur lors du chargement des projets: ${error.message}
+            <br>
+            <small>Veuillez réessayer ou contacter l'administrateur.</small>
+          </div>
+        `;
       }
     }
 
-    // Fonction pour afficher les projets dans le conteneur
+    // ==========================================
+    // FONCTION POUR AFFICHER LES PROJETS
+    // ==========================================
     function displayProjects(projects) {
       const projectsHtml = `
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>N°</th>
-                            <th>Intitulé</th>
-                            <th>Secteur</th>
-                            <th>Coût (MDH)</th>
-                            <th>Emplois</th>
-                            <th>Période</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${projects.map(project => `
-                            <tr>
-                                <td>
-                                    <span class="badge bg-primary">${project.num_projet}</span>
-                                </td>
-                                <td>
-                                    <div class="fw-bold text-truncate" style="max-width: 300px;" title="${project.intitule}">
-                                        ${project.intitule}
-                                    </div>
-                                </td>
-                                <td>
-                                    <small class="text-muted">${project.lib_secteur}</small>
-                                </td>
-                                <td>
-                                    <span class="fw-bold text-success">
-                                        ${project.cout_total_mdh ? parseFloat(project.cout_total_mdh).toFixed(2) : '0.00'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="text-info">
-                                        ${project.nbr_emplois_directs || 0}
-                                    </span>
-                                </td>
-                                <td>
-                                    <small class="text-muted">
-                                        ${project.annee_debut ? project.annee_debut : ''}
-                                        ${project.annee_fin ? '- ' + project.annee_fin : ''}
-                                    </small>
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary btn-view-project"
-                                            data-project-id="${project.id}"
-                                            title="Voir les détails du projet">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Intitulé</th>
+                <th>Secteur</th>
+                <th>Coût (MDH)</th>
+                <th>Emplois</th>
+                <th>Période</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${projects.map(project => `
+                <tr>
+                  <td>
+                    <span class="badge bg-primary">${project.num_projet}</span>
+                  </td>
+                  <td>
+                    <div class="fw-bold text-truncate" style="max-width: 300px;" title="${project.intitule}">
+                      ${project.intitule}
+                    </div>
+                  </td>
+                  <td>
+                    <small class="text-muted">${project.lib_secteur}</small>
+                  </td>
+                  <td>
+                    <span class="fw-bold text-success">
+                      ${project.cout_total_mdh ? parseFloat(project.cout_total_mdh).toFixed(2) : '0.00'}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="text-info">
+                      ${project.nbr_emplois_directs || 0}
+                    </span>
+                  </td>
+                  <td>
+                    <small class="text-muted">
+                      ${project.annee_debut ? project.annee_debut : ''}
+                      ${project.annee_fin ? '- ' + project.annee_fin : ''}
+                    </small>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary btn-view-project"
+                            data-project-id="${project.id}"
+                            title="Voir les détails du projet">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
 
       projectsContainer.innerHTML = projectsHtml;
 
@@ -507,8 +532,8 @@
       viewProjectButtons.forEach(button => {
         button.addEventListener('click', function() {
           const projectId = this.dataset.projectId;
-          // TODO: Rediriger vers la page de détail du projet
-          window.location.href = `/projects/view/${projectId}`;
+          // Ajouter le paramètre axe=true pour indiquer qu'on vient du dashboard
+          window.location.href = `/projects/view/${projectId}?axe=true`;
         });
       });
     }
@@ -519,7 +544,7 @@
     });
 
     // =============================================
-    // GESTION DES INSTRUCTIONS
+    // GESTION DES INSTRUCTIONS (Si activé)
     // =============================================
 
     // Boutons d'ajout d'instruction
@@ -559,13 +584,13 @@
 
         switch (filter) {
           case 'executed':
-            shouldShow = status === '1'; // Statut exécuté
+            shouldShow = status === '1';
             break;
           case 'in_progress':
-            shouldShow = status === '2'; // Statut en cours
+            shouldShow = status === '2';
             break;
           case 'overdue':
-            shouldShow = status === '3'; // Statut en retard
+            shouldShow = status === '3';
             break;
           case 'all':
           default:
@@ -594,30 +619,25 @@
     // GESTION DES ACTIONS SUR LES INSTRUCTIONS
     // =============================================
 
-    // Boutons d'édition d'instruction
     document.addEventListener('click', function(e) {
       if (e.target.closest('.btn-edit-instruction')) {
         const instructionId = e.target.closest('.btn-edit-instruction').dataset.instructionId;
         window.location.href = `/instructions/edit/${instructionId}`;
       }
 
-      // Boutons de visualisation d'instruction
       if (e.target.closest('.btn-view-instruction')) {
         const instructionId = e.target.closest('.btn-view-instruction').dataset.instructionId;
         window.location.href = `/instructions/view/${instructionId}`;
       }
 
-      // Boutons de suppression d'instruction
       if (e.target.closest('.btn-delete-instruction')) {
         const button = e.target.closest('.btn-delete-instruction');
         const instructionId = button.dataset.instructionId;
         const instructionTitle = button.dataset.instructionTitle;
 
-        // Préparer le modal de confirmation
         document.getElementById('instruction-to-delete-title').textContent = instructionTitle;
         document.getElementById('confirm-delete-instruction').dataset.instructionId = instructionId;
 
-        // Afficher le modal
         const modal = new bootstrap.Modal(document.getElementById('deleteInstructionModal'));
         modal.show();
       }
@@ -640,16 +660,13 @@
           const result = await response.json();
 
           if (result.success) {
-            // Fermer le modal
             bootstrap.Modal.getInstance(document.getElementById('deleteInstructionModal')).hide();
 
-            // Supprimer la ligne du tableau
             const row = document.querySelector(`tr[data-instruction-id="${instructionId}"]`);
             if (row) {
               row.remove();
             }
 
-            // Afficher un message de succès
             showToast('Instruction supprimée avec succès', 'success');
           } else {
             showToast('Erreur lors de la suppression: ' + result.message, 'error');
@@ -665,7 +682,6 @@
     // FONCTIONS UTILITAIRES
     // =============================================
 
-    // Fonction pour afficher des notifications toast
     function showToast(message, type = 'info') {
       const toastContainer = document.getElementById('toast-container') || createToastContainer();
 
@@ -674,27 +690,25 @@
       toast.setAttribute('role', 'alert');
 
       toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} me-2"></i>
-                    ${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        `;
+        <div class="d-flex">
+          <div class="toast-body">
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} me-2"></i>
+            ${message}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      `;
 
       toastContainer.appendChild(toast);
 
       const bsToast = new bootstrap.Toast(toast);
       bsToast.show();
 
-      // Supprimer le toast après qu'il soit caché
       toast.addEventListener('hidden.bs.toast', function() {
         toast.remove();
       });
     }
 
-    // Créer le conteneur de toast s'il n'existe pas
     function createToastContainer() {
       const container = document.createElement('div');
       container.id = 'toast-container';
@@ -703,8 +717,58 @@
       document.body.appendChild(container);
       return container;
     }
-  });
+
+  }); // FIN DU DOMContentLoaded
 </script>
+
+<style>
+  /* Styles CSS personnalisés pour le dashboard gouverneur */
+  .axe-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+  }
+
+  .bg-gradient-primary {
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  }
+
+  .btn-group-sm>.btn,
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.2rem;
+  }
+
+  #selected-axe-projects {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+
+  .text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .toast-container {
+    z-index: 1055;
+  }
+</style>
 
 <style>
   /* Styles CSS personnalisés pour le dashboard gouverneur */

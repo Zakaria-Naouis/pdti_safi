@@ -1,4 +1,4 @@
-// controllers/dashboardController.js
+// controllers/dashboardController.js - CORRECTION COMPLÈTE
 
 const Project = require('../models/Project');
 const Instruction = require('../models/Instruction');
@@ -183,16 +183,13 @@ exports.getPaginatedProjectsByPole = async (poleId, page = 1, limit = 5) => {
   }
 };
 
-// Tableau de bord administrateur - VERSION FINALE CORRIGÉE
+// Tableau de bord administrateur
 exports.getAdminDashboard = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
     
-    // Statistiques globales
     const stats = await this.getStats();
-   
-    // Statistiques par pôle
     const poles = await db.query('SELECT * FROM poles ORDER BY id ASC');
     const polesStats = [];
    
@@ -207,8 +204,6 @@ exports.getAdminDashboard = async (req, res) => {
       });
     }
 
-    // Récupérer tous les axes avec leurs pôles
-    // Récupérer tous les axes avec leurs pôles et objectifs
     const axesResult = await db.query(`
       SELECT 
         a.id, 
@@ -223,7 +218,6 @@ exports.getAdminDashboard = async (req, res) => {
       ORDER BY a.id ASC
     `);
 
-    // Projets paginés avec TOUTES les informations nécessaires
     const offset = (page - 1) * limit;
     
     const projectsQuery = `
@@ -327,10 +321,16 @@ exports.getGouverneurDashboard = async (req, res) => {
   }
 };
 
-// Route API : Récupérer les projets par axe
+// Route API : Récupérer les projets par axe - CORRECTION IMPORTANTE
 exports.getProjectsByAxe = async (req, res) => {
   try {
     const axeId = parseInt(req.params.axeId);
+
+    console.log('=== DEBUG getProjectsByAxe ===');
+    console.log('1. Paramètre reçu:', req.params.axeId);
+    console.log('2. axeId parsé:', axeId);
+    console.log('3. Type de axeId:', typeof axeId);
+    console.log('4. isNaN(axeId):', isNaN(axeId));
 
     if (!axeId || isNaN(axeId) || axeId < 1) {
       console.error('ID d\'axe invalide:', req.params.axeId);
@@ -341,7 +341,7 @@ exports.getProjectsByAxe = async (req, res) => {
       });
     }
 
-    console.log('Récupération des projets pour l\'axe:', axeId);
+    console.log('5. Requête SQL pour l\'axe:', axeId);
 
     const projects = await db.query(`
       SELECT 
@@ -367,7 +367,8 @@ exports.getProjectsByAxe = async (req, res) => {
       ORDER BY p.num_projet ASC
     `, [axeId]);
 
-    console.log(`${projects.rows.length} projet(s) trouvé(s) pour l'axe ${axeId}`);
+    console.log('6. Nombre de projets trouvés:', projects.rows.length);
+    console.log('7. Projets:', projects.rows);
 
     res.json({
       success: true,
@@ -376,7 +377,10 @@ exports.getProjectsByAxe = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erreur lors de la récupération des projets par axe:', error);
+    console.error('=== ERREUR getProjectsByAxe ===');
+    console.error('Erreur complète:', error);
+    console.error('Stack trace:', error.stack);
+    
     res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la récupération des projets',
