@@ -198,8 +198,7 @@
                     <label for="num_projet" class="form-label required-field">Numéro de projet</label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
-                      <input type="number" class="form-control" id="num_projet" name="num_projet" value="<%= project.num_projet %>" required min="1" max="99999" data-validate="required,unique-project">
-                      <div class="spinner-border spinner-border-sm text-primary d-none" id="num_projet_spinner"></div>
+                      <input type="number" class="form-control" id="num_projet" name="num_projet" value="<%= project.num_projet %>" required min="1" max="99999">
                     </div>
                     <div class="validation-message" id="num_projet_message"></div>
                   </div>
@@ -653,449 +652,358 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const form = document.getElementById('project-form');
-      const submitBtn = document.getElementById('submit-btn');
+        const form = document.getElementById('project-form');
+        const submitBtn = document.getElementById('submit-btn');
 
-      // Configuration de validation
-      const ValidationConfig = {
-        messages: {
-          required: 'Ce champ est obligatoire',
-          minlength: 'Ce champ doit contenir au minimum {min} caractères',
-          maxlength: 'Ce champ doit contenir au maximum {max} caractères',
-          min: 'La valeur doit être supérieure ou égale à {min}',
-          max: 'La valeur doit être inférieure ou égale à {max}',
-          positive: 'La valeur doit être positive',
-          'positive-zero': 'La valeur doit être positive ou égale à zéro',
-          'year-range': 'L\'année doit être comprise entre 2020 et 2050',
-          'end-after-start': 'L\'année de fin doit être supérieure à l\'année de début',
-          'unique-project': 'Ce numéro de projet existe déjà',
-          email: 'Veuillez saisir une adresse email valide',
-          number: 'Veuillez saisir un nombre valide'
-        },
-        rules: {
-          required: function(value) {
-            return value && value.toString().trim() !== '';
+        // Configuration de validation
+        const ValidationConfig = {
+          messages: {
+            required: 'Ce champ est obligatoire',
+            minlength: 'Ce champ doit contenir au minimum {min} caractères',
+            maxlength: 'Ce champ doit contenir au maximum {max} caractères',
+            min: 'La valeur doit être supérieure ou égale à {min}',
+            max: 'La valeur doit être inférieure ou égale à {max}',
+            positive: 'La valeur doit être positive',
+            'positive-zero': 'La valeur doit être positive ou égale à zéro',
+            'year-range': 'L\'année doit être comprise entre 2020 et 2050',
+            'end-after-start': 'L\'année de fin doit être supérieure à l\'année de début',
+            'unique-project': 'Ce numéro de projet existe déjà',
+            email: 'Veuillez saisir une adresse email valide',
+            number: 'Veuillez saisir un nombre valide'
           },
-          minlength: function(value, min) {
-            return !value || value.toString().length >= parseInt(min);
-          },
-          maxlength: function(value, max) {
-            return !value || value.toString().length <= parseInt(max);
-          },
-          min: function(value, min) {
-            return !value || parseFloat(value) >= parseFloat(min);
-          },
-          max: function(value, max) {
-            return !value || parseFloat(value) <= parseFloat(max);
-          },
-          positive: function(value) {
-            return !value || parseFloat(value) > 0;
-          },
-          'positive-zero': function(value) {
-            return !value || parseFloat(value) >= 0;
-          },
-          'year-range': function(value) {
-            if (!value) return true;
-            const year = parseInt(value);
-            return year >= 2020 && year <= 2050;
-          },
-          'end-after-start': function(value) {
-            if (!value) return true;
-            const startYear = document.getElementById('annee_debut').value;
-            if (!startYear) return true;
-            return parseInt(value) >= parseInt(startYear);
-          },
-          email: function(value) {
-            if (!value) return true;
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(value);
-          },
-          number: function(value) {
-            return !value || !isNaN(parseFloat(value));
+          rules: {
+            required: function(value) {
+              return value && value.toString().trim() !== '';
+            },
+            minlength: function(value, min) {
+              return !value || value.toString().length >= parseInt(min);
+            },
+            maxlength: function(value, max) {
+              return !value || value.toString().length <= parseInt(max);
+            },
+            min: function(value, min) {
+              return !value || parseFloat(value) >= parseFloat(min);
+            },
+            max: function(value, max) {
+              return !value || parseFloat(value) <= parseFloat(max);
+            },
+            positive: function(value) {
+              return !value || parseFloat(value) > 0;
+            },
+            'positive-zero': function(value) {
+              return !value || parseFloat(value) >= 0;
+            },
+            'year-range': function(value) {
+              if (!value) return true;
+              const year = parseInt(value);
+              return year >= 2020 && year <= 2050;
+            },
+            'end-after-start': function(value) {
+              if (!value) return true;
+              const startYear = document.getElementById('annee_debut').value;
+              if (!startYear) return true;
+              return parseInt(value) >= parseInt(startYear);
+            },
+            email: function(value) {
+              if (!value) return true;
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              return emailRegex.test(value);
+            },
+            number: function(value) {
+              return !value || !isNaN(parseFloat(value));
+            }
           }
-        }
-      };
+        };
 
-      // Fonction de validation d'un champ
-      function validateField(field, validationRules) {
-        const value = field.value.trim();
-        const errorDiv = field.parentElement.querySelector('.error-message') ||
-          field.parentElement.parentElement.querySelector('.error-message');
+        // Fonction de validation d'un champ
+        function validateField(field, validationRules) {
+          const value = field.value.trim();
+          const errorDiv = field.parentElement.querySelector('.error-message') ||
+            field.parentElement.parentElement.querySelector('.error-message');
 
-        // Supprimer les anciens messages d'erreur
-        if (errorDiv) {
-          errorDiv.remove();
-        }
-
-        field.classList.remove('is-invalid', 'is-valid');
-
-        let isValid = true;
-        let errorMessage = '';
-
-        // Appliquer les règles de validation
-        for (const rule of validationRules) {
-          if (!rule.test(value)) {
-            isValid = false;
-            errorMessage = rule.message;
-            break;
-          }
-        }
-
-        // Afficher le résultat de la validation
-        if (!isValid) {
-          field.classList.add('is-invalid');
-          const errorElement = document.createElement('div');
-          errorElement.className = 'error-message text-danger mt-1';
-          errorElement.innerHTML = `<small><i class="fas fa-exclamation-triangle"></i> ${errorMessage}</small>`;
-          field.parentElement.appendChild(errorElement);
-        } else if (value !== '') {
-          field.classList.add('is-valid');
-        }
-
-        return isValid;
-      }
-
-      // Fonction de vérification d'unicité du numéro de projet - CORRIGÉE
-      async function checkProjectNumberUniqueness(numProjet, field) {
-        if (!numProjet) return true;
-
-        const spinner = document.getElementById('num_projet_spinner');
-
-        try {
-          if (spinner) spinner.classList.remove('d-none');
-
-          // Récupérer le numéro de projet original au chargement de la page
-          const originalProjectNumber = '<%= project.num_projet %>';
-
-          // Si le numéro n'a pas changé, pas besoin de vérifier
-          if (numProjet.toString() === originalProjectNumber.toString()) {
-            return true;
+          // Supprimer les anciens messages d'erreur
+          if (errorDiv) {
+            errorDiv.remove();
           }
 
-          // Récupérer l'ID du projet pour les modifications
-          const projectId = getProjectIdFromUrl();
-          const url = projectId ?
-            `/projects/api/check-project-number/${numProjet}?projectId=${projectId}` :
-            `/projects/api/check-project-number/${numProjet}`;
+          field.classList.remove('is-invalid', 'is-valid');
 
-          const response = await fetch(url);
-          const data = await response.json();
+          let isValid = true;
+          let errorMessage = '';
 
-          return !data.exists;
-        } catch (error) {
-          console.error('Erreur lors de la vérification:', error);
-          return true; // En cas d'erreur, on autorise pour ne pas bloquer
-        } finally {
-          if (spinner) spinner.classList.add('d-none');
-        }
-      }
-
-      // Fonction pour extraire l'ID du projet depuis l'URL (pour les modifications)
-      function getProjectIdFromUrl() {
-        const path = window.location.pathname;
-        const editMatch = path.match(/\/projects\/edit\/(\d+)/);
-        return editMatch ? editMatch[1] : null;
-      }
-
-      // Règles de validation par champ
-      const validationRules = {
-        num_projet: [{
-            test: (value) => value !== '',
-            message: 'Le numéro de projet est requis'
-          },
-          {
-            test: (value) => /^\d+$/.test(value),
-            message: 'Le numéro de projet doit être numérique'
-          },
-          {
-            test: (value) => parseInt(value) >= 1 && parseInt(value) <= 99999,
-            message: 'Le numéro de projet doit être entre 1 et 99999'
+          // Appliquer les règles de validation
+          for (const rule of validationRules) {
+            if (!rule.test(value)) {
+              isValid = false;
+              errorMessage = rule.message;
+              break;
+            }
           }
-        ],
-        intitule: [{
-            test: (value) => value !== '',
-            message: 'L\'intitulé du projet est requis'
-          },
-          {
-            test: (value) => value.length >= 10,
-            message: 'L\'intitulé doit contenir au moins 10 caractères'
-          },
-          {
-            test: (value) => value.length <= 500,
-            message: 'L\'intitulé ne peut pas dépasser 500 caractères'
-          }
-        ],
-        axe_id: [{
-          test: (value) => value !== '',
-          message: 'Veuillez sélectionner un axe'
-        }],
-        secteur_id: [{
-          test: (value) => value !== '',
-          message: 'Veuillez sélectionner un secteur'
-        }],
-        cout_total_mdh: [{
-          test: (value) => value === '' || (!isNaN(value) && parseFloat(value) >= 0),
-          message: 'Le coût total doit être un nombre positif'
-        }],
-        duree_mois: [{
-          test: (value) => value === '' || (!isNaN(value) && parseInt(value) > 0),
-          message: 'La durée doit être un nombre entier positif'
-        }],
-        annee_debut: [{
-          test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 2020 && parseInt(value) <= 2050),
-          message: 'L\'année de début doit être entre 2020 et 2050'
-        }],
-        annee_fin: [{
-          test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 2020 && parseInt(value) <= 2050),
-          message: 'L\'année de fin doit être entre 2020 et 2050'
-        }],
-        nbr_emplois_directs: [{
-          test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 0),
-          message: 'Le nombre d\'emplois doit être un nombre entier positif'
-        }],
-        nbr_beneficiaires: [{
-          test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 0),
-          message: 'Le nombre de bénéficiaires doit être un nombre entier positif'
-        }]
-      };
 
-      // Fonction de validation asynchrone pour les champs avec vérification serveur
-      async function validateFieldAsync(field, rules) {
-        // Validation classique d'abord
-        const isValidClassic = validateField(field, rules);
-
-        // Vérification spéciale pour le numéro de projet
-        if (field.id === 'num_projet' && isValidClassic && field.value.trim() !== '') {
-          const isUnique = await checkProjectNumberUniqueness(field.value.trim(), field);
-          if (!isUnique) {
+          // Afficher le résultat de la validation
+          if (!isValid) {
             field.classList.add('is-invalid');
-            field.classList.remove('is-valid');
-
             const errorElement = document.createElement('div');
             errorElement.className = 'error-message text-danger mt-1';
-            errorElement.innerHTML = '<small><i class="fas fa-exclamation-triangle"></i> Ce numéro de projet existe déjà</small>';
+            errorElement.innerHTML = `<small><i class="fas fa-exclamation-triangle"></i> ${errorMessage}</small>`;
             field.parentElement.appendChild(errorElement);
-            return false;
+          } else if (value !== '') {
+            field.classList.add('is-valid');
           }
+
+          return isValid;
         }
 
-        return isValidClassic;
-      }
+        /* Fonction de vérification d'unicité du numéro de projet - CORRIGÉE
+        async function checkProjectNumberUniqueness(numProjet, field) {
+          if (!numProjet) return true;
 
-      // Ajouter la validation en temps réel
-      Object.keys(validationRules).forEach(fieldName => {
-        const field = document.getElementById(fieldName);
-        if (field) {
-          // Validation avec délai pour le numéro de projet
-          if (fieldName === 'num_projet') {
-            let timeout;
-            field.addEventListener('input', function() {
-              clearTimeout(timeout);
-              // Supprimer les classes d'erreur pendant la saisie
-              field.classList.remove('is-invalid', 'is-valid');
-              const errorDiv = field.parentElement.querySelector('.error-message');
-              if (errorDiv) errorDiv.remove();
+          const spinner = document.getElementById('num_projet_spinner');
 
-              timeout = setTimeout(() => {
+          try {
+            if (spinner) spinner.classList.remove('d-none');
+
+            // Récupérer le numéro de projet original au chargement de la page
+            const originalProjectNumber = '<%= project.num_projet %>';
+
+            // Si le numéro n'a pas changé, pas besoin de vérifier
+            if (numProjet.toString() === originalProjectNumber.toString()) {
+              return true;
+            }
+
+            // Récupérer l'ID du projet pour les modifications
+            const projectId = getProjectIdFromUrl();
+            const url = projectId ?
+              `/projects/api/check-project-number/${numProjet}?projectId=${projectId}` :
+              `/projects/api/check-project-number/${numProjet}`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            return !data.exists;
+          } catch (error) {
+            console.error('Erreur lors de la vérification:', error);
+            return true; // En cas d'erreur, on autorise pour ne pas bloquer
+          } finally {
+            if (spinner) spinner.classList.add('d-none');
+          }
+        }*/
+
+        // Fonction pour extraire l'ID du projet depuis l'URL (pour les modifications)
+        function getProjectIdFromUrl() {
+          const path = window.location.pathname;
+          const editMatch = path.match(/\/projects\/edit\/(\d+)/);
+          return editMatch ? editMatch[1] : null;
+        }
+
+        // Règles de validation par champ
+        const validationRules = {
+          num_projet: [{
+              test: (value) => value !== '',
+              message: 'Le numéro de projet est requis'
+            },
+            {
+              test: (value) => /^\d+$/.test(value),
+              message: 'Le numéro de projet doit être numérique'
+            },
+            {
+              test: (value) => parseInt(value) >= 1 && parseInt(value) <= 99999,
+              message: 'Le numéro de projet doit être entre 1 et 99999'
+            }
+          ],
+          intitule: [{
+              test: (value) => value !== '',
+              message: 'L\'intitulé du projet est requis'
+            },
+            {
+              test: (value) => value.length >= 10,
+              message: 'L\'intitulé doit contenir au moins 10 caractères'
+            },
+            {
+              test: (value) => value.length <= 500,
+              message: 'L\'intitulé ne peut pas dépasser 500 caractères'
+            }
+          ],
+          axe_id: [{
+            test: (value) => value !== '',
+            message: 'Veuillez sélectionner un axe'
+          }],
+          secteur_id: [{
+            test: (value) => value !== '',
+            message: 'Veuillez sélectionner un secteur'
+          }],
+          cout_total_mdh: [{
+            test: (value) => value === '' || (!isNaN(value) && parseFloat(value) >= 0),
+            message: 'Le coût total doit être un nombre positif'
+          }],
+          duree_mois: [{
+            test: (value) => value === '' || (!isNaN(value) && parseInt(value) > 0),
+            message: 'La durée doit être un nombre entier positif'
+          }],
+          annee_debut: [{
+            test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 2020 && parseInt(value) <= 2050),
+            message: 'L\'année de début doit être entre 2020 et 2050'
+          }],
+          annee_fin: [{
+            test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 2020 && parseInt(value) <= 2050),
+            message: 'L\'année de fin doit être entre 2020 et 2050'
+          }],
+          nbr_emplois_directs: [{
+            test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 0),
+            message: 'Le nombre d\'emplois doit être un nombre entier positif'
+          }],
+          nbr_beneficiaires: [{
+            test: (value) => value === '' || (!isNaN(value) && parseInt(value) >= 0),
+            message: 'Le nombre de bénéficiaires doit être un nombre entier positif'
+          }]
+        };
+
+        /* Fonction de validation asynchrone pour les champs avec vérification serveur
+        async function validateFieldAsync(field, rules) {
+          // Validation classique d'abord
+          const isValidClassic = validateField(field, rules);
+
+          // Vérification spéciale pour le numéro de projet
+          if (field.id === 'num_projet' && isValidClassic && field.value.trim() !== '') {
+            const isUnique = await checkProjectNumberUniqueness(field.value.trim(), field);
+            if (!isUnique) {
+              field.classList.add('is-invalid');
+              field.classList.remove('is-valid');
+
+              const errorElement = document.createElement('div');
+              errorElement.className = 'error-message text-danger mt-1';
+              errorElement.innerHTML = '<small><i class="fas fa-exclamation-triangle"></i> Ce numéro de projet existe déjà</small>';
+              field.parentElement.appendChild(errorElement);
+              return false;
+            }
+          }
+
+          return isValidClassic;
+        }*/
+
+        /* Ajouter la validation en temps réel
+        Object.keys(validationRules).forEach(fieldName => {
+          const field = document.getElementById(fieldName);
+          if (field) {
+            // Validation avec délai pour le numéro de projet
+            if (fieldName === 'num_projet') {
+              let timeout;
+              field.addEventListener('input', function() {
+                clearTimeout(timeout);
+                // Supprimer les classes d'erreur pendant la saisie
+                field.classList.remove('is-invalid', 'is-valid');
+                const errorDiv = field.parentElement.querySelector('.error-message');
+                if (errorDiv) errorDiv.remove();
+
+                timeout = setTimeout(() => {
+                  validateFieldAsync(field, validationRules[fieldName]);
+                }, 500);
+              });
+
+              field.addEventListener('blur', function() {
+                clearTimeout(timeout);
                 validateFieldAsync(field, validationRules[fieldName]);
-              }, 500);
-            });
+              });
+            } else {
+              // Validation classique pour les autres champs
+              field.addEventListener('blur', function() {
+                validateField(field, validationRules[fieldName]);
+              });
 
-            field.addEventListener('blur', function() {
-              clearTimeout(timeout);
-              validateFieldAsync(field, validationRules[fieldName]);
-            });
-          } else {
-            // Validation classique pour les autres champs
+              field.addEventListener('input', function() {
+                // Supprimer les classes d'erreur pendant la saisie
+                field.classList.remove('is-invalid');
+                const errorDiv = field.parentElement.querySelector('.error-message');
+                if (errorDiv) errorDiv.remove();
+              });
+            }
+          }
+        });*/
+        // Ajouter la validation en temps réel
+        Object.keys(validationRules).forEach(fieldName => {
+          const field = document.getElementById(fieldName);
+          if (field) {
+            // Validation simple pour TOUS les champs
             field.addEventListener('blur', function() {
               validateField(field, validationRules[fieldName]);
             });
 
             field.addEventListener('input', function() {
-              // Supprimer les classes d'erreur pendant la saisie
               field.classList.remove('is-invalid');
               const errorDiv = field.parentElement.querySelector('.error-message');
               if (errorDiv) errorDiv.remove();
             });
           }
-        }
-      });
+        });
 
-      // Gestion de la case "Étude réalisée"
-      const etudeCheckbox = document.getElementById('etude');
-      const etudeEtatSelect = document.getElementById('etude_etat');
+        // Gestion de la case "Étude réalisée"
+        const etudeCheckbox = document.getElementById('etude');
+        const etudeEtatSelect = document.getElementById('etude_etat');
 
-      if (etudeCheckbox && etudeEtatSelect) {
-        etudeCheckbox.addEventListener('change', function() {
+        if (etudeCheckbox && etudeEtatSelect) {
+          etudeCheckbox.addEventListener('change', function() {
+            etudeEtatSelect.disabled = !etudeCheckbox.checked;
+            if (!etudeCheckbox.checked) {
+              etudeEtatSelect.value = '';
+            }
+          });
+
+          // Initialiser l'état au chargement
           etudeEtatSelect.disabled = !etudeCheckbox.checked;
-          if (!etudeCheckbox.checked) {
-            etudeEtatSelect.value = '';
-          }
-        });
+        }
 
-        // Initialiser l'état au chargement
-        etudeEtatSelect.disabled = !etudeCheckbox.checked;
-      }
+        // Validation des années (début/fin)
+        const anneeDebut = document.getElementById('annee_debut');
+        const anneeFin = document.getElementById('annee_fin');
 
-      // Validation des années (début/fin)
-      const anneeDebut = document.getElementById('annee_debut');
-      const anneeFin = document.getElementById('annee_fin');
+        if (anneeDebut && anneeFin) {
+          anneeDebut.addEventListener('input', function() {
+            validateField(anneeDebut, validationRules.annee_debut);
+            validateField(anneeFin, validationRules.annee_fin);
+          });
+        }
 
-      if (anneeDebut && anneeFin) {
-        anneeDebut.addEventListener('input', function() {
-          validateField(anneeDebut, validationRules.annee_debut);
-          validateField(anneeFin, validationRules.annee_fin);
-        });
-      }
+        // Compteurs de caractères
+        function initCharCounters() {
+          const fieldsWithCounters = ['intitule', 'objectifs', 'composantes', 'detail_cout', 'detail_nbr_emploi', 'detail_nbr_beneficiaires'];
 
-      // Compteurs de caractères
-      function initCharCounters() {
-        const fieldsWithCounters = ['intitule', 'objectifs', 'composantes', 'detail_cout', 'detail_nbr_emploi', 'detail_nbr_beneficiaires'];
+          fieldsWithCounters.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            const counter = document.getElementById(fieldId + '_count');
 
-        fieldsWithCounters.forEach(fieldId => {
-          const field = document.getElementById(fieldId);
-          const counter = document.getElementById(fieldId + '_count');
+            if (field && counter) {
+              function updateCounter() {
+                const length = field.value.length;
+                counter.textContent = length;
 
-          if (field && counter) {
-            function updateCounter() {
-              const length = field.value.length;
-              counter.textContent = length;
-
-              const maxLength = field.getAttribute('maxlength');
-              if (maxLength) {
-                const percentage = (length / parseInt(maxLength)) * 100;
-                counter.className = percentage > 90 ? 'text-danger fw-bold' :
-                  percentage > 80 ? 'text-warning' : '';
+                const maxLength = field.getAttribute('maxlength');
+                if (maxLength) {
+                  const percentage = (length / parseInt(maxLength)) * 100;
+                  counter.className = percentage > 90 ? 'text-danger fw-bold' :
+                    percentage > 80 ? 'text-warning' : '';
+                }
               }
+
+              // Initialiser le compteur
+              updateCounter();
+
+              // Mettre à jour lors de la saisie
+              field.addEventListener('input', updateCounter);
             }
-
-            // Initialiser le compteur
-            updateCounter();
-
-            // Mettre à jour lors de la saisie
-            field.addEventListener('input', updateCounter);
-          }
-        });
-      }
-
-      // Validation lors de la soumission
-      form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        let isFormValid = true;
-        const validationErrors = [];
-
-        // Valider tous les champs requis
-        const requiredFields = ['num_projet', 'intitule', 'axe_id', 'secteur_id'];
-
-        for (const fieldName of requiredFields) {
-          const field = document.getElementById(fieldName);
-          if (field) {
-            let isValid;
-            if (fieldName === 'num_projet') {
-              isValid = await validateFieldAsync(field, validationRules[fieldName]);
-            } else {
-              isValid = validateField(field, validationRules[fieldName]);
-            }
-
-            if (!isValid) {
-              isFormValid = false;
-              const fieldLabel = document.querySelector(`label[for="${fieldName}"]`)?.textContent || fieldName;
-              validationErrors.push(fieldLabel);
-            }
-          }
+          });
         }
 
-        // Valider les champs optionnels s'ils sont remplis
-        const optionalFields = ['cout_total_mdh', 'duree_mois', 'annee_debut', 'annee_fin', 'nbr_emplois_directs', 'nbr_beneficiaires'];
+        // Validation lors de la soumission
+        form.addEventListener('submit', async function(e) {
+          e.preventDefault();
 
-        optionalFields.forEach(fieldName => {
-          const field = document.getElementById(fieldName);
-          if (field && field.value.trim() !== '') {
-            const isValid = validateField(field, validationRules[fieldName]);
-            if (!isValid) {
-              isFormValid = false;
-              const fieldLabel = document.querySelector(`label[for="${fieldName}"]`)?.textContent || fieldName;
-              validationErrors.push(fieldLabel);
-            }
-          }
-        });
-
-        // Validation spéciale des années de début et fin
-        if (anneeDebut && anneeFin && anneeDebut.value && anneeFin.value) {
-          if (parseInt(anneeFin.value) < parseInt(anneeDebut.value)) {
-            const errorElement = document.createElement('div');
-            errorElement.className = 'error-message text-danger mt-1';
-            errorElement.innerHTML = '<small><i class="fas fa-exclamation-triangle"></i> L\'année de fin doit être supérieure à l\'année de début</small>';
-            anneeFin.parentElement.appendChild(errorElement);
-            anneeFin.classList.add('is-invalid');
-            isFormValid = false;
-            validationErrors.push('Années de début/fin');
-          }
-        }
-
-        // Afficher le résumé des erreurs
-        const validationSummary = document.getElementById('validation-summary');
-        const validationList = document.getElementById('validation-list');
-
-        if (!isFormValid) {
-          if (validationList) {
-            validationList.innerHTML = '';
-            validationErrors.forEach(error => {
-              const li = document.createElement('li');
-              li.textContent = error;
-              validationList.appendChild(li);
-            });
-          }
-
-          if (validationSummary) {
-            validationSummary.classList.remove('d-none');
-            validationSummary.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center'
-            });
-          }
-
-          // Faire défiler vers la première erreur
-          const firstError = document.querySelector('.is-invalid');
-          if (firstError) {
-            firstError.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center'
-            });
-            firstError.focus();
-          }
-
-          return;
-        }
-
-        // Si tout est valide, soumettre le formulaire
-        if (validationSummary) {
-          validationSummary.classList.add('d-none');
-        }
-
-        // Afficher le spinner
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          const btnText = submitBtn.querySelector('.btn-text');
-          const spinner = submitBtn.querySelector('.spinner-border');
-
-          if (btnText) btnText.textContent = 'Enregistrement...';
-          if (spinner) spinner.classList.remove('d-none');
-        }
-
-        // Soumettre le formulaire
-        form.submit();
-      });
-
-      // Bouton de validation manuelle
-      const validateBtn = document.getElementById('validate-btn');
-      if (validateBtn) {
-        validateBtn.addEventListener('click', async function() {
           let isFormValid = true;
+          const validationErrors = [];
 
-          // Valider tous les champs
-          for (const fieldName of Object.keys(validationRules)) {
+          // Valider tous les champs requis
+          const requiredFields = ['num_projet', 'intitule', 'axe_id', 'secteur_id'];
+
+          /*for (const fieldName of requiredFields) {
             const field = document.getElementById(fieldName);
             if (field) {
               let isValid;
@@ -1107,9 +1015,126 @@
 
               if (!isValid) {
                 isFormValid = false;
+                const fieldLabel = document.querySelector(`label[for="${fieldName}"]`)?.textContent || fieldName;
+                validationErrors.push(fieldLabel);
+              }
+            }
+          }*/
+
+          for (const fieldName of requiredFields) {
+            const field = document.getElementById(fieldName);
+            if (field) {
+              const isValid = validateField(field, validationRules[fieldName]);
+
+              if (!isValid) {
+                isFormValid = false;
+                const fieldLabel = document.querySelector(`label[for="${fieldName}"]`)?.textContent || fieldName;
+                validationErrors.push(fieldLabel);
               }
             }
           }
+
+          // Valider les champs optionnels s'ils sont remplis
+          const optionalFields = ['cout_total_mdh', 'duree_mois', 'annee_debut', 'annee_fin', 'nbr_emplois_directs', 'nbr_beneficiaires'];
+
+          optionalFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (field && field.value.trim() !== '') {
+              const isValid = validateField(field, validationRules[fieldName]);
+              if (!isValid) {
+                isFormValid = false;
+                const fieldLabel = document.querySelector(`label[for="${fieldName}"]`)?.textContent || fieldName;
+                validationErrors.push(fieldLabel);
+              }
+            }
+          });
+
+          // Validation spéciale des années de début et fin
+          if (anneeDebut && anneeFin && anneeDebut.value && anneeFin.value) {
+            if (parseInt(anneeFin.value) < parseInt(anneeDebut.value)) {
+              const errorElement = document.createElement('div');
+              errorElement.className = 'error-message text-danger mt-1';
+              errorElement.innerHTML = '<small><i class="fas fa-exclamation-triangle"></i> L\'année de fin doit être supérieure à l\'année de début</small>';
+              anneeFin.parentElement.appendChild(errorElement);
+              anneeFin.classList.add('is-invalid');
+              isFormValid = false;
+              validationErrors.push('Années de début/fin');
+            }
+          }
+
+          // Afficher le résumé des erreurs
+          const validationSummary = document.getElementById('validation-summary');
+          const validationList = document.getElementById('validation-list');
+
+          if (!isFormValid) {
+            if (validationList) {
+              validationList.innerHTML = '';
+              validationErrors.forEach(error => {
+                const li = document.createElement('li');
+                li.textContent = error;
+                validationList.appendChild(li);
+              });
+            }
+
+            if (validationSummary) {
+              validationSummary.classList.remove('d-none');
+              validationSummary.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+              });
+            }
+
+            // Faire défiler vers la première erreur
+            const firstError = document.querySelector('.is-invalid');
+            if (firstError) {
+              firstError.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+              });
+              firstError.focus();
+            }
+
+            return;
+          }
+
+          // Si tout est valide, soumettre le formulaire
+          if (validationSummary) {
+            validationSummary.classList.add('d-none');
+          }
+
+          // Afficher le spinner
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            const btnText = submitBtn.querySelector('.btn-text');
+            const spinner = submitBtn.querySelector('.spinner-border');
+
+            if (btnText) btnText.textContent = 'Enregistrement...';
+            if (spinner) spinner.classList.remove('d-none');
+          }
+
+          // Soumettre le formulaire
+          form.submit();
+        });
+
+        // Bouton de validation manuelle
+        const validateBtn = document.getElementById('validate-btn');
+        if (validateBtn) {
+          validateBtn.addEventListener('click', function() {
+            let isFormValid = true;
+
+            for (const fieldName of Object.keys(validationRules)) {
+              const field = document.getElementById(fieldName);
+              if (field) {
+                const isValid = validateField(field, validationRules[fieldName]);
+
+                if (!isValid) {
+                  isFormValid = false;
+                }
+              }
+            }
+
+            // ... reste du code
+          });
 
           // Afficher le résultat
           if (isFormValid) {
@@ -1125,14 +1150,14 @@
             }
           }
         });
-      }
+    }
 
-      // Fonction pour afficher un message de succès
-      function showSuccessMessage(message) {
-        const toast = document.createElement('div');
-        toast.className = 'position-fixed top-0 end-0 p-3';
-        toast.style.zIndex = '1055';
-        toast.innerHTML = `
+    // Fonction pour afficher un message de succès
+    function showSuccessMessage(message) {
+      const toast = document.createElement('div');
+      toast.className = 'position-fixed top-0 end-0 p-3';
+      toast.style.zIndex = '1055';
+      toast.innerHTML = `
       <div class="toast show" role="alert">
         <div class="toast-header bg-success text-white">
           <i class="fas fa-check-circle me-2"></i>
@@ -1143,32 +1168,19 @@
       </div>
     `;
 
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-      }
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
 
-      // Initialiser les compteurs de caractères
-      initCharCounters();
+    // Initialiser les compteurs de caractères
+    initCharCounters();
 
-      // Gestionnaire d'erreurs global
-      window.addEventListener('error', function(event) {
-        if (event.error && event.error.message.includes('validation')) {
-          console.error('Erreur de validation:', event.error);
+    // Gestionnaire d'erreurs global
+    window.addEventListener('error', function(event) {
+      if (event.error && event.error.message.includes('validation')) {
+        console.error('Erreur de validation:', event.error);
 
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            const btnText = submitBtn.querySelector('.btn-text');
-            const spinner = submitBtn.querySelector('.spinner-border');
-
-            if (btnText) btnText.textContent = 'Enregistrer les modifications';
-            if (spinner) spinner.classList.add('d-none');
-          }
-        }
-      });
-
-      // Réactiver la soumission si l'utilisateur revient sur la page
-      window.addEventListener('pageshow', function(event) {
-        if (event.persisted && submitBtn) {
+        if (submitBtn) {
           submitBtn.disabled = false;
           const btnText = submitBtn.querySelector('.btn-text');
           const spinner = submitBtn.querySelector('.spinner-border');
@@ -1176,9 +1188,22 @@
           if (btnText) btnText.textContent = 'Enregistrer les modifications';
           if (spinner) spinner.classList.add('d-none');
         }
-      });
+      }
+    });
 
-      console.log('Système de validation initialisé pour la modification de projet');
+    // Réactiver la soumission si l'utilisateur revient sur la page
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted && submitBtn) {
+        submitBtn.disabled = false;
+        const btnText = submitBtn.querySelector('.btn-text');
+        const spinner = submitBtn.querySelector('.spinner-border');
+
+        if (btnText) btnText.textContent = 'Enregistrer les modifications';
+        if (spinner) spinner.classList.add('d-none');
+      }
+    });
+
+    console.log('Système de validation initialisé pour la modification de projet');
     });
     // NOUVEAU: Filtrage des objectifs selon l'axe sélectionné
     const axeSelect = document.getElementById('axe_id');

@@ -509,17 +509,18 @@ exports.getEditProject = async (req, res) => {
 };
 
 // MODIFICATION: Modifier un projet avec vérification d'unicité conditionnelle
-// MODIFICATION: Modifier un projet avec vérification d'unicité conditionnelle
+
+// MODIFICATION: Modifier un projet sans vérification d'unicité
 exports.postEditProject = [
   ...projectValidationRules(),
  
   async (req, res) => {
     const errors = validationResult(req);
-    let customErrors = [];
+    const allErrors = errors.array(); // Pas de vérification d'unicité personnalisée
     const projectId = req.params.id;
 
     try {
-      // Récupérer le projet actuel pour comparer le numéro
+      // Récupérer le projet actuel
       const currentProject = await Project.findById(projectId);
       if (!currentProject) {
         return res.status(404).render('error', {
@@ -531,21 +532,7 @@ exports.postEditProject = [
         });
       }
 
-      /* Vérification d'unicité SEULEMENT si le numéro a changé
-      if (req.body.num_projet && parseInt(req.body.num_projet) !== parseInt(currentProject.num_projet)) {
-        const isUnique = await checkProjectNumberUniqueness(req.body.num_projet, projectId);
-        if (!isUnique) {
-          customErrors.push({
-            param: 'num_projet',
-            msg: 'Ce numéro de projet existe déjà',
-            value: req.body.num_projet
-          });
-        }
-      }*/
-
-      // Combiner les erreurs
-      const allErrors = errors.isEmpty() ? customErrors : [...errors.array(), ...customErrors];
-
+      // Si il y a des erreurs de validation
       if (allErrors.length > 0) {
         let axesQuery = 'SELECT * FROM axes ORDER BY lib_axe ASC';
         let axesParams = [];
@@ -555,7 +542,7 @@ exports.postEditProject = [
           axesParams = [req.user.pole_id];
         }
 
-        // Récupération de toutes les données incluant le pôle
+        // Récupération de toutes les données incluant le pôle ET les objectifs
         const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs, poleInfo] = await Promise.all([
           db.query(axesQuery, axesParams),
           db.query('SELECT * FROM secteurs ORDER BY lib_secteur ASC'),
@@ -635,7 +622,7 @@ exports.postEditProject = [
         axesParams = [req.user.pole_id];
       }
 
-      // Récupération de toutes les données incluant le pôle pour le catch
+      // Récupération de toutes les données incluant le pôle ET les objectifs pour le catch
       const [axes, secteurs, moas, moes, gestionnaires, statuts, communes, objectifs, poleInfo] = await Promise.all([
         db.query(axesQuery, axesParams),
         db.query('SELECT * FROM secteurs ORDER BY lib_secteur ASC'),
