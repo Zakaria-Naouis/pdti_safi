@@ -172,7 +172,7 @@ const projectValidationRules = () => {
   ];
 };
 
-// NOUVELLE FONCTION: Vérification d'unicité du numéro de projet
+/* NOUVELLE FONCTION: Vérification d'unicité du numéro de projet
 async function checkProjectNumberUniqueness(numProjet, projectId = null) {
   try {
     let query = 'SELECT id FROM projets WHERE num_projet = $1';
@@ -190,7 +190,7 @@ async function checkProjectNumberUniqueness(numProjet, projectId = null) {
     console.error('Erreur lors de la vérification d\'unicité:', error);
     return false;
   }
-}
+}*/
 
 // Liste des projets (inchangée)
 exports.getProjects = async (req, res) => {
@@ -305,7 +305,7 @@ exports.postAddProject = [
     const errors = validationResult(req);
     let customErrors = [];
 
-    // Vérification d'unicité du numéro de projet pour l'ajout
+    /* Vérification d'unicité du numéro de projet pour l'ajout
     if (req.body.num_projet) {
       const isUnique = await checkProjectNumberUniqueness(req.body.num_projet);
       if (!isUnique) {
@@ -315,7 +315,7 @@ exports.postAddProject = [
           value: req.body.num_projet
         });
       }
-    }
+    }*/
 
     // Combiner les erreurs de validation et les erreurs personnalisées
     const allErrors = errors.isEmpty() ? customErrors : [...errors.array(), ...customErrors];
@@ -531,7 +531,7 @@ exports.postEditProject = [
         });
       }
 
-      // Vérification d'unicité SEULEMENT si le numéro a changé
+      /* Vérification d'unicité SEULEMENT si le numéro a changé
       if (req.body.num_projet && parseInt(req.body.num_projet) !== parseInt(currentProject.num_projet)) {
         const isUnique = await checkProjectNumberUniqueness(req.body.num_projet, projectId);
         if (!isUnique) {
@@ -541,7 +541,7 @@ exports.postEditProject = [
             value: req.body.num_projet
           });
         }
-      }
+      }*/
 
       // Combiner les erreurs
       const allErrors = errors.isEmpty() ? customErrors : [...errors.array(), ...customErrors];

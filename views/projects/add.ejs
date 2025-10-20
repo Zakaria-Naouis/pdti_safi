@@ -671,7 +671,7 @@
         return isValid;
       }
 
-      // MODIFICATION: Fonction de vérification d'unicité du numéro de projet
+      /* MODIFICATION: Fonction de vérification d'unicité du numéro de projet
       async function checkProjectNumberUniqueness(numProjet, field) {
         if (!numProjet) return true;
 
@@ -696,7 +696,7 @@
         } finally {
           if (spinner) spinner.classList.add('d-none');
         }
-      }
+      }*/
 
       // Fonction pour extraire l'ID du projet depuis l'URL (pour les modifications)
       function getProjectIdFromUrl() {
@@ -767,7 +767,7 @@
         }]
       };
 
-      // Fonction de validation asynchrone pour les champs avec vérification serveur
+      /* Fonction de validation asynchrone pour les champs avec vérification serveur
       async function validateFieldAsync(field, rules) {
         // Validation classique d'abord
         const isValidClassic = validateField(field, rules);
@@ -788,7 +788,7 @@
         }
 
         return isValidClassic;
-      }
+      }*/
 
       // Ajouter la validation en temps réel
       Object.keys(validationRules).forEach(fieldName => {
