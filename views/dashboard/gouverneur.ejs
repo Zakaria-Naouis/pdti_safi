@@ -114,7 +114,12 @@
                 <h6 class="text-primary mb-3"><%= axe.lib_axe %></h6>
                 <div class="row text-center">
                   <div class="col-6 border-end">
-                    <div class="text-success fw-bold fs-5"><%= axe.cout_total.toFixed(1) %>M</div>
+                    <div class="text-success fw-bold fs-5">
+                      <%= axe.cout_total.toFixed(1) %>M
+                      <br><span class="badge bg-success ms-1" style="font-size: 1rem; vertical-align: middle;">
+                        <%= axe.pourcentage %>%
+                      </span>
+                    </div>
                     <small class="text-muted">MDH</small>
                   </div>
                   <div class="col-6">

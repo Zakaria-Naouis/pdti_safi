@@ -36,6 +36,7 @@ exports.getStats = async () => {
 };
 
 // Récupérer les axes avec leurs statistiques
+// Récupérer les axes avec leurs statistiques
 exports.getAxesWithStats = async () => {
   try {
     const result = await db.query(`
@@ -55,7 +56,8 @@ exports.getAxesWithStats = async () => {
       ORDER BY a.id ASC
     `);
 
-    return result.rows.map(row => ({
+    // ========== NOUVEAU CODE : Calcul des pourcentages ==========
+    const axes = result.rows.map(row => ({
       id: row.id,
       lib_axe: row.lib_axe,
       pole_id: row.pole_id,
@@ -65,11 +67,26 @@ exports.getAxesWithStats = async () => {
       total_emplois: parseInt(row.total_emplois) || 0,
       total_beneficiaires: parseInt(row.total_beneficiaires) || 0
     }));
+
+    // Calculer le montant total global de tous les axes
+    const montantTotalGlobal = axes.reduce((sum, axe) => sum + axe.cout_total, 0);
+
+    // Ajouter le pourcentage à chaque axe
+    return axes.map(axe => ({
+      ...axe,
+      pourcentage: montantTotalGlobal > 0 
+        ? ((axe.cout_total / montantTotalGlobal) * 100).toFixed(2)
+        : '0.00',
+      montant_total_global: montantTotalGlobal
+    }));
+    // ========== FIN DU NOUVEAU CODE ==========
+
   } catch (error) {
     console.error('Erreur lors de la récupération des axes avec statistiques:', error);
     return [];
   }
 };
+
 
 // Récupérer les statistiques des instructions
 exports.getInstructionStats = async (userId, profileId) => {
