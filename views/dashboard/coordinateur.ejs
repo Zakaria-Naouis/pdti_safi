@@ -225,42 +225,112 @@
 </div>
 <!-- Script de décodage HTML et gestion du dashboard -->
 <!-- Script de décodage HTML et gestion du dashboard -->
+<!-- Script de décodage HTML robuste et gestion du dashboard -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
-    // 1. DÉCODAGE DES ENTITÉS HTML
+    // 1. DÉCODAGE ROBUSTE DES ENTITÉS HTML
     // ==========================================
 
-    // Fonction pour décoder les entités HTML
+    // Fonction de décodage robuste qui gère les encodages multiples
     function decodeHtmlEntities(text) {
       if (!text) return text;
+
+      let decoded = text;
+
+      // Décoder les entités numériques hexadécimales courantes
+      const entities = {
+        '&#x2F;': '/',
+        '&#x27;': "'",
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#x3A;': ':',
+        '&#x2C;': ',',
+        '&#x28;': '(',
+        '&#x29;': ')',
+        '&#xE9;': 'é',
+        '&#xE8;': 'è',
+        '&#xEA;': 'ê',
+        '&#xE0;': 'à',
+        '&#xE2;': 'â',
+        '&#xE7;': 'ç',
+        '&#xF4;': 'ô',
+        '&#xF9;': 'ù',
+        '&#xFB;': 'û',
+        '&#xEF;': 'ï',
+        '&#xEE;': 'î',
+        '&#xC9;': 'É',
+        '&#xC8;': 'È',
+        '&#xCA;': 'Ê',
+        '&#xC0;': 'À'
+      };
+
+      // Premier passage : décoder &amp; en &
+      decoded = decoded.replace(/&amp;/g, '&');
+
+      // Deuxième passage : décoder toutes les entités
+      Object.keys(entities).forEach(entity => {
+        const regex = new RegExp(entity, 'g');
+        decoded = decoded.replace(regex, entities[entity]);
+      });
+
+      // Troisième passage : utiliser textarea pour les entités restantes
       const textarea = document.createElement('textarea');
-      textarea.innerHTML = text;
-      return textarea.value;
+      textarea.innerHTML = decoded;
+      decoded = textarea.value;
+
+      // Quatrième passage : nettoyer les entités mal formées (d&...)
+      decoded = decoded.replace(/d&#x27;/g, "d'");
+      decoded = decoded.replace(/l&#x27;/g, "l'");
+      decoded = decoded.replace(/qu&#x27;/g, "qu'");
+      decoded = decoded.replace(/n&#x27;/g, "n'");
+      decoded = decoded.replace(/s&#x27;/g, "s'");
+      decoded = decoded.replace(/j&#x27;/g, "j'");
+      decoded = decoded.replace(/c&#x27;/g, "c'");
+      decoded = decoded.replace(/m&#x27;/g, "m'");
+      decoded = decoded.replace(/t&#x27;/g, "t'");
+
+      return decoded;
     }
 
-    // Décoder les intitulés des projets
-    document.querySelectorAll('td a.text-decoration-none').forEach(function(element) {
-      element.textContent = decodeHtmlEntities(element.textContent);
-    });
+    // Décoder TOUS les éléments textuels du tableau
+    console.log('Démarrage du décodage HTML...');
 
-    // Décoder les axes
-    document.querySelectorAll('tbody tr td:nth-child(3)').forEach(function(element) {
-      element.textContent = decodeHtmlEntities(element.textContent);
-    });
+    // Décoder les intitulés des projets (colonne 2)
+    document.querySelectorAll('tbody tr').forEach(function(row) {
+      // Intitulé (colonne 2 - lien)
+      const intituleLink = row.querySelector('td:nth-child(2) a');
+      if (intituleLink) {
+        const originalText = intituleLink.textContent;
+        intituleLink.textContent = decodeHtmlEntities(originalText);
+        console.log('Intitulé décodé:', originalText, '->', intituleLink.textContent);
+      }
 
-    // Décoder les secteurs
-    document.querySelectorAll('tbody tr td:nth-child(4)').forEach(function(element) {
-      element.textContent = decodeHtmlEntities(element.textContent);
-    });
+      // Axe (colonne 3)
+      const axeCell = row.querySelector('td:nth-child(3)');
+      if (axeCell) {
+        axeCell.textContent = decodeHtmlEntities(axeCell.textContent);
+      }
 
-    // Décoder les attributs data-title des boutons supprimer
-    document.querySelectorAll('.delete-project').forEach(function(button) {
-      const title = button.getAttribute('data-title');
-      if (title) {
-        button.setAttribute('data-title', decodeHtmlEntities(title));
+      // Secteur (colonne 4)
+      const secteurCell = row.querySelector('td:nth-child(4)');
+      if (secteurCell) {
+        secteurCell.textContent = decodeHtmlEntities(secteurCell.textContent);
+      }
+
+      // Bouton supprimer - data-title
+      const deleteBtn = row.querySelector('.delete-project');
+      if (deleteBtn) {
+        const title = deleteBtn.getAttribute('data-title');
+        if (title) {
+          deleteBtn.setAttribute('data-title', decodeHtmlEntities(title));
+        }
       }
     });
+
+    console.log('Décodage HTML terminé');
 
     // ==========================================
     // 2. GESTION DE LA SUPPRESSION DES PROJETS
@@ -274,7 +344,7 @@
       button.addEventListener('click', function() {
         projectIdToDelete = this.getAttribute('data-id');
         const projectTitle = this.getAttribute('data-title');
-        // Utiliser le titre déjà décodé
+        // Le titre est déjà décodé
         document.getElementById('projectTitle').textContent = projectTitle;
         deleteModal.show();
       });
@@ -304,6 +374,6 @@
       }
     });
 
-    console.log('Dashboard coordinateur initialisé avec décodage HTML');
+    console.log('Dashboard coordinateur initialisé avec décodage HTML robuste');
   });
 </script>
