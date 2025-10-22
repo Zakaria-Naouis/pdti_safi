@@ -223,10 +223,49 @@
     </div>
   </div>
 </div>
-
+<!-- Script de décodage HTML et gestion du dashboard -->
+<!-- Script de décodage HTML et gestion du dashboard -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Gestion de la suppression des projets
+    // ==========================================
+    // 1. DÉCODAGE DES ENTITÉS HTML
+    // ==========================================
+
+    // Fonction pour décoder les entités HTML
+    function decodeHtmlEntities(text) {
+      if (!text) return text;
+      const textarea = document.createElement('textarea');
+      textarea.innerHTML = text;
+      return textarea.value;
+    }
+
+    // Décoder les intitulés des projets
+    document.querySelectorAll('td a.text-decoration-none').forEach(function(element) {
+      element.textContent = decodeHtmlEntities(element.textContent);
+    });
+
+    // Décoder les axes
+    document.querySelectorAll('tbody tr td:nth-child(3)').forEach(function(element) {
+      element.textContent = decodeHtmlEntities(element.textContent);
+    });
+
+    // Décoder les secteurs
+    document.querySelectorAll('tbody tr td:nth-child(4)').forEach(function(element) {
+      element.textContent = decodeHtmlEntities(element.textContent);
+    });
+
+    // Décoder les attributs data-title des boutons supprimer
+    document.querySelectorAll('.delete-project').forEach(function(button) {
+      const title = button.getAttribute('data-title');
+      if (title) {
+        button.setAttribute('data-title', decodeHtmlEntities(title));
+      }
+    });
+
+    // ==========================================
+    // 2. GESTION DE LA SUPPRESSION DES PROJETS
+    // ==========================================
+
     const deleteButtons = document.querySelectorAll('.delete-project');
     const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
     let projectIdToDelete = null;
@@ -235,6 +274,7 @@
       button.addEventListener('click', function() {
         projectIdToDelete = this.getAttribute('data-id');
         const projectTitle = this.getAttribute('data-title');
+        // Utiliser le titre déjà décodé
         document.getElementById('projectTitle').textContent = projectTitle;
         deleteModal.show();
       });
@@ -264,36 +304,6 @@
       }
     });
 
-    // =============================================
-    // [COMMENTÉ] GESTION DES INSTRUCTIONS
-    // =============================================
-    /*
-    // Gestion des instructions
-    const markExecutedButtons = document.querySelectorAll('.mark-executed');
-    markExecutedButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const instructionId = this.getAttribute('data-id');
-        fetch(`/instructions/execute/${instructionId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            }
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              alert('Instruction marquée comme exécutée avec succès');
-              location.reload();
-            } else {
-              alert('Erreur: ' + data.message);
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            alert('Une erreur est survenue');
-          });
-      });
-    });
-    */
+    console.log('Dashboard coordinateur initialisé avec décodage HTML');
   });
 </script>
