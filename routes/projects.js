@@ -40,14 +40,14 @@ const projectValidation = [
   // Champs de texte optionnels avec limites
   body('objectifs')
     .optional({ nullable: true, checkFalsy: true })
-    .isLength({ max: 1000 })
+    .isLength({ max: 10000 })
     .withMessage('Les objectifs ne peuvent pas dépasser 1000 caractères')
     .trim()
     .escape(),
 
   body('composantes')
     .optional({ nullable: true, checkFalsy: true })
-    .isLength({ max: 1000 })
+    .isLength({ max: 10000 })
     .withMessage('Les composantes ne peuvent pas dépasser 1000 caractères')
     .trim()
     .escape(),
