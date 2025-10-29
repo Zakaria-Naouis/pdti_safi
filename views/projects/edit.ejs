@@ -474,6 +474,30 @@
             <% }); %>
           </div>
         </div>
+        <!-- Section: Partenaires -->
+        <div class="form-section">
+          <h5 class="section-title">
+            <i class="fas fa-handshake me-2"></i>Partenaires
+          </h5>
+          <div class="row" id="partenaires-container">
+            <% if (typeof partenaires !== 'undefined' && partenaires.length > 0) { %>
+            <% partenaires.forEach(function(partenaire) { %>
+            <div class="col-md-4 mb-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="partenaires" value="<%= partenaire.id %>" id="partenaire_<%= partenaire.id %>" <% if (projectPartenaires && projectPartenaires.some(pp => pp.id == partenaire.id)) { %>checked<% } %>>
+                <label class="form-check-label" for="partenaire_<%= partenaire.id %>">
+                  <%= partenaire.nom_partenaire %>
+                </label>
+              </div>
+            </div>
+            <% }); %>
+            <% } else { %>
+            <div class="col-12">
+              <p class="text-muted"><i class="fas fa-info-circle me-2"></i>Aucun partenaire disponible</p>
+            </div>
+            <% } %>
+          </div>
+        </div>
 
         <!-- Section: Acteurs -->
         <div class="form-section">

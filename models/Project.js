@@ -458,6 +458,33 @@ class Project {
       throw error;
     }
   }
-}
 
+
+  static async getProjectPartenaires(projectId) {
+    const result = await db.query(`
+      SELECT p.* FROM partenaires p
+      JOIN projets_partenaires pp ON p.id = pp.partenaire_id
+      WHERE pp.projet_id = $1
+      ORDER BY p.nom_partenaire ASC
+    `, [projectId]);
+    return result.rows;
+  }
+
+    static async updateProjectPartenaires(projectId, partenaireIds) {
+    if (!partenaireIds || partenaireIds.length === 0) {
+      await db.query('DELETE FROM projets_partenaires WHERE projet_id = $1', [projectId]);
+      return;
+    }
+    
+    await db.query('DELETE FROM projets_partenaires WHERE projet_id = $1', [projectId]);
+    
+    const values = partenaireIds.map((id, index) => `($1, $${index + 2})`).join(',');
+    await db.query(`
+      INSERT INTO projets_partenaires (projet_id, partenaire_id)
+      VALUES ${values}
+    `, [projectId, ...partenaireIds]);
+  }
+
+
+}
 module.exports = Project;

@@ -53,11 +53,221 @@
   </div>
 </div>
 
-<div class="row mt-4">
+<!--*******************  PANNEAUX STATISTIQUES HIÉRARCHIQUES PAR AXE, SECTEUR, OBJECTIF ******************    -->
+<!-- ================================================================ -->
+<!-- SECTION STATISTIQUES HIÉRARCHIQUES - ADAPTÉE -->
+<!-- Colonnes exactes retournées par get_stats_hierarchy_by_pole() -->
+<!-- ================================================================ -->
+
+<div class="row mt-5 mb-5">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">
+          <i class="fas fa-chart-bar me-2"></i>Statistiques Détaillées par Axe, Secteur et Objectif
+        </h5>
+      </div>
+      <div class="card-body">
+        <!-- Conteneur des axes -->
+        <div id="hierarchicalStatsContainer">
+          <% if (hierarchicalStats && hierarchicalStats.length > 0) { %>
+          <% hierarchicalStats.forEach(function(axe, axeIndex) { %>
+          <!-- ========== PANNEAU AXE ========== -->
+          <!-- Déterminer la classe de couleur basée sur le pôle -->
+          <% 
+            let poleClass = 'primary';
+            const poleName = axe.pole_libelle ? axe.pole_libelle.toLowerCase() : '';
+            
+            if (poleName.includes('investissement') || poleName.includes('emploi')) {
+              poleClass = 'pole-investissement';
+            } else if (poleName.includes('éducation') || poleName.includes('education') || poleName.includes('enseignement')) {
+              poleClass = 'pole-education';
+            } else if (poleName.includes('santé') || poleName.includes('sante')) {
+              poleClass = 'pole-sante';
+            } else if (poleName.includes('eau') || poleName.includes('ressources')) {
+              poleClass = 'pole-ressources-eau';
+            } else if (poleName.includes('territoriale') || poleName.includes('aménagement') || poleName.includes('amenagement')) {
+              poleClass = 'pole-amenagement';
+            }
+          %>
+          <div class="accordion mb-3" id="accordionAxe<%= axeIndex %>">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingAxe<%= axeIndex %>">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAxe<%= axeIndex %>" aria-expanded="false" aria-controls="collapseAxe<%= axeIndex %>">
+
+                  <div class="d-flex justify-content-between align-items-center w-100">
+                    <span>
+                      <i class="fas fa-arrow-right me-2 axe-icon"></i>
+                      <strong><%= axe.axe_libelle || 'Axe sans nom' %></strong>
+                    </span>
+                    <div class="stats-badges ms-auto">
+                      <span class="badge bg-primary me-2" title="Nombre de projets">
+                        <i class="fas fa-cubes me-1"></i><strong><%= axe.stats.nombre_projets %></strong>
+                      </span>
+                      <span class="badge bg-success me-2" title="Coût total">
+                        <i class="fas fa-dollar-sign me-1"></i><strong><%= axe.stats.cout_total_mdh.toFixed(2) %></strong> MDH
+                      </span>
+                      <span class="badge bg-info me-2" title="Emplois directs">
+                        <i class="fas fa-briefcase me-1"></i><strong><%= axe.stats.total_emplois_directs %></strong>
+                      </span>
+                      <span class="badge bg-warning text-dark" title="Bénéficiaires">
+                        <i class="fas fa-users me-1"></i><strong><%= axe.stats.total_beneficiaires %></strong>
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              </h2>
+
+              <div id="collapseAxe<%= axeIndex %>" class="accordion-collapse collapse" aria-labelledby="headingAxe<%= axeIndex %>" data-bs-parent="#accordionAxe<%= axeIndex %>">
+                <div class="accordion-body p-0">
+                  <!-- ========== TABLEAU DES SECTEURS ========== -->
+                  <div class="table-responsive">
+                    <table class="table table-sm table-striped mb-0">
+                      <thead class="table-light">
+                        <tr>
+                          <th style="width: 30%;">
+                            <i class="fas fa-layer-group me-2"></i>Secteur
+                          </th>
+                          <th class="text-center" style="width: 14%;">
+                            <i class="fas fa-cubes me-1"></i>Projets
+                          </th>
+                          <th class="text-center" style="width: 14%;">
+                            <i class="fas fa-dollar-sign me-1"></i>Montant (MDH)
+                          </th>
+                          <th class="text-center" style="width: 14%;">
+                            <i class="fas fa-briefcase me-1"></i>Emplois
+                          </th>
+                          <th class="text-center" style="width: 14%;">
+                            <i class="fas fa-users me-1"></i>Bénéficiaires
+                          </th>
+                          <th class="text-center" style="width: 14%;">
+                            <i class="fas fa-chevron-down me-1"></i>Détails
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% if (axe.secteurs && axe.secteurs.length > 0) { %>
+                        <% axe.secteurs.forEach(function(secteur, secteurIndex) { %>
+                        <!-- Ligne Secteur (dépliable) -->
+                        <tr class="secteur-row" data-axe="<%= axeIndex %>" data-secteur="<%= secteurIndex %>" role="button">
+                          <td>
+                            <span class="secteur-toggle cursor-pointer">
+                              <i class="fas fa-chevron-right me-2 secteur-icon"></i>
+                              <strong><%= secteur.secteur_libelle || 'Secteur sans nom' %></strong>
+                            </span>
+                          </td>
+                          <td class="text-center">
+                            <!-- BADGE COULEUR PAR PÔLE -->
+                            <span class="badge <%= poleClass %>"><%= secteur.stats.nombre_projets %></span>
+                          </td>
+                          <td class="text-center">
+                            <strong><%= secteur.stats.cout_total_mdh.toFixed(2) %></strong>
+                          </td>
+                          <td class="text-center">
+                            <!-- BADGE COULEUR PAR PÔLE -->
+                            <span class="badge <%= poleClass %>"><%= secteur.stats.total_emplois_directs %></span>
+                          </td>
+                          <td class="text-center">
+                            <!-- BADGE COULEUR PAR PÔLE -->
+                            <span class="badge <%= poleClass %>"><%= secteur.stats.total_beneficiaires %></span>
+                          </td>
+                          <td class="text-center">
+                            <button class="btn btn-sm btn-outline-secondary secteur-collapse-btn" data-secteur-id="<%= secteurIndex %>" data-axe-id="<%= axeIndex %>" title="Afficher les objectifs">
+                              <i class="fas fa-chevron-down"></i>
+                            </button>
+                          </td>
+                        </tr>
+
+                        <!-- ========== DÉTAIL OBJECTIFS (caché par défaut) ========== -->
+                        <tr class="objectif-details" id="details-axe<%= axeIndex %>-secteur<%= secteurIndex %>" style="display: none;">
+                          <td colspan="6" class="p-3 bg-light">
+                            <div class="objectifs-list">
+                              <% if (secteur.objectifs && secteur.objectifs.length > 0) { %>
+                              <div class="mb-2">
+                                <h6 class="text-muted mb-3">
+                                  <i class="fas fa-bullseye me-2"></i>Objectifs
+                                  <span class="badge bg-secondary"><%= secteur.objectifs.length %></span>
+                                </h6>
+                              </div>
+                              <table class="table table-sm table-borderless mb-0">
+                                <thead>
+                                  <tr class="border-bottom">
+                                    <th style="width: 30%; padding-left: 30px;">Objectif</th>
+                                    <th class="text-center" style="width: 14%;">Projets</th>
+                                    <th class="text-center" style="width: 14%;">Montant (MDH)</th>
+                                    <th class="text-center" style="width: 14%;">Emplois</th>
+                                    <th class="text-center" style="width: 14%;">Bénéficiaires</th>
+                                    <th class="text-center" style="width: 14%;"></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <% secteur.objectifs.forEach(function(objectif) { %>
+                                  <tr style="background-color: #f9f9f9;">
+                                    <td style="padding-left: 40px;">
+                                      <strong><%= objectif.objectif_libelle || 'Objectif sans nom' %></strong>
+                                    </td>
+                                    <td class="text-center">
+                                      <span class="badge <%= poleClass %>"><%= objectif.nombre_projets %></span>
+                                    </td>
+                                    <td class="text-center">
+                                      <strong><%= objectif.cout_total_mdh.toFixed(2) %></strong>
+                                    </td>
+                                    <td class="text-center">
+                                      <span class="badge <%= poleClass %>"><%= objectif.total_emplois_directs %></span>
+                                    </td>
+                                    <td class="text-center">
+                                      <span class="badge <%= poleClass %>"><%= objectif.total_beneficiaires %></span>
+                                    </td>
+                                    <td class="text-center">
+                                      <!-- Bouton pour afficher les projets (optionnel) -->
+                                    </td>
+                                  </tr>
+                                  <% }); %>
+                                </tbody>
+                              </table>
+                              <% } else { %>
+                              <p class="text-muted mb-0">Aucun objectif trouvé pour ce secteur.</p>
+                              <% } %>
+                            </div>
+                          </td>
+                        </tr>
+                        <% }); %>
+                        <% } else { %>
+                        <tr>
+                          <td colspan="6" class="text-center text-muted py-3">
+                            Aucun secteur trouvé pour cet axe.
+                          </td>
+                        </tr>
+                        <% } %>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <% }); %>
+          <% } else { %>
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Aucune donnée disponible pour votre pôle. Commencez par créer des projets.
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--*******************  TABLEAU COMPLET DES PROJETS DU COORDINATEUR ******************    -->
+
+<div class="row mt-5 mb-5">
   <div class="col-md-12">
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Projets de votre Pôle</h5>
+        <h5 class="mb-0">
+          <i class="fas fa-list me-2"></i>Liste des Projets
+        </h5>
         <div class="d-flex align-items-center">
           <span class="badge bg-primary rounded-pill me-3"><%= pagination.totalItems %> projets</span>
           <a href="/projects/add" class="btn btn-success">
@@ -67,46 +277,65 @@
       </div>
       <div class="card-body">
         <div class="table-responsive">
-          <table class="table table-striped">
+          <table class="table table-sm table-striped table-hover">
             <thead>
               <tr>
-                <th>Numéro</th>
-                <th>Intitulé</th>
-                <th>Axe</th>
-                <th>Secteur</th>
-                <th>Coût (MDH)</th>
-                <th>Emplois</th>
-                <th>Bénéficiaires</th>
-                <th>Actions</th>
+                <th style="width: 5%;">#</th>
+                <th style="width: 25%;">Intitulé</th>
+                <th style="width: 15%;">Axe</th>
+                <th style="width: 15%;">Secteur</th>
+                <th style="width: 10%;">Coût (MDH)</th>
+                <th style="width: 10%;">Emplois</th>
+                <th style="width: 10%;"><i class="fas fa-cog"></i>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <% projects.forEach(function(project) { %>
+              <% if (projects && projects.length > 0) { %>
+              <% projects.forEach(function(project, index) { %>
+              <% 
+                let projectPoleClass = 'primary';
+                const projectPoleName = project.lib_pole ? project.lib_pole.toLowerCase() : '';
+                
+                if (projectPoleName.includes('investissement') || projectPoleName.includes('emploi')) {
+                  projectPoleClass = 'pole-investissement';
+                } else if (projectPoleName.includes('éducation') || projectPoleName.includes('education') || projectPoleName.includes('enseignement')) {
+                  projectPoleClass = 'pole-education';
+                } else if (projectPoleName.includes('santé') || projectPoleName.includes('sante')) {
+                  projectPoleClass = 'pole-sante';
+                } else if (projectPoleName.includes('eau') || projectPoleName.includes('ressources')) {
+                  projectPoleClass = 'pole-ressources-eau';
+                } else if (projectPoleName.includes('territoriale') || projectPoleName.includes('aménagement') || projectPoleName.includes('amenagement')) {
+                  projectPoleClass = 'pole-amenagement';
+                }
+              %>
               <tr>
-                <td><%= project.num_projet %></td>
+                <td><span class="badge <%= projectPoleClass %>"><%= project.num_projet %></span></td>
                 <td>
-                  <a href="/projects/edit/<%= project.id %>" class="text-decoration-none">
+                  <a href="/projects/detail/<%= project.id %>" class="text-decoration-none" title="Voir les détails">
                     <%= project.intitule %>
                   </a>
                 </td>
                 <td><%= project.lib_axe %></td>
                 <td><%= project.lib_secteur %></td>
-                <td><%= project.cout_total_mdh %></td>
-                <td><%= project.nbr_emplois_directs %></td>
-                <td><%= project.nbr_beneficiaires %></td>
-                <td>
-                  <a href="/projects/edit/<%= project.id %>" class="btn btn-sm btn-primary me-1">
-                    <i class="fas fa-edit"></i> Modifier
-                  </a>
-                  <button class="btn btn-sm btn-danger delete-project" data-id="<%= project.id %>" data-title="<%= project.intitule %>">
-                    <i class="fas fa-trash"></i> Supprimer
-                  </button>
+                <td class="text-center"><strong><%= project.cout_total_mdh ? parseFloat(project.cout_total_mdh).toFixed(2) : '0.00' %></strong></td>
+                <td class="text-center"><span class="badge <%= projectPoleClass %>"><%= project.nbr_emplois_directs || 0 %></span></td>
+                <td class="text-center">
+                  <div class="btn-group-actions">
+                    <a href="/projects/edit/<%= project.id %>" class="btn btn-sm btn-outline-primary" title="Modifier">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger delete-project" data-id="<%= project.id %>" data-title="<%= project.intitule %>" title="Supprimer">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
               <% }); %>
-              <% if (projects.length === 0) { %>
+              <% } else { %>
               <tr>
-                <td colspan="8" class="text-center">Aucun projet trouvé</td>
+                <td colspan="7" class="text-center text-muted py-3">
+                  <i class="fas fa-inbox me-2"></i>Aucun projet trouvé pour votre pôle.
+                </td>
               </tr>
               <% } %>
             </tbody>
@@ -114,7 +343,7 @@
         </div>
 
         <!-- Pagination -->
-        <% if (pagination.totalPages > 1) { %>
+        <% if (pagination && pagination.totalPages > 1) { %>
         <nav aria-label="Pagination des projets">
           <ul class="pagination justify-content-center">
             <li class="page-item <%= !pagination.hasPrev ? 'disabled' : '' %>">
@@ -145,235 +374,239 @@
           </ul>
         </nav>
         <% } %>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- ============================================= -->
-<!-- [COMMENTÉ] SECTION DES INSTRUCTIONS EN ATTENTE -->
-<!-- =============================================
-<div class="row mt-4">
-  <div class="col-md-12">
-    <div class="card">
-      <div class="card-header">
-        <h5>Instructions en attente (<%= pendingCount %>)</h5>
-      </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>Numéro</th>
-                <th>Sujet</th>
-                <th>Émetteur</th>
-                <th>Date Limite</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% pendingInstructions.forEach(function(instruction) { %>
-              <tr>
-                <td><%= instruction.num_instruction %></td>
-                <td><%= instruction.sujet %></td>
-                <td><%= instruction.emetteur_nom %> <%= instruction.emetteur_prenom %></td>
-                <td><%= new Date(instruction.date_limite).toLocaleDateString('fr-FR') %></td>
-                <td>
-                  <button class="btn btn-sm btn-success mark-executed" data-id="<%= instruction.id %>">
-                    Marquer comme exécuté
-                  </button>
-                </td>
-              </tr>
-              <% }); %>
-              <% if (pendingInstructions.length === 0) { %>
-              <tr>
-                <td colspan="5" class="text-center">Aucune instruction en attente</td>
-              </tr>
-              <% } %>
-            </tbody>
-          </table>
+        <!-- Modal de confirmation de suppression -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                  <i class="fas fa-exclamation-triangle me-2"></i>Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce projet ?</p>
+                <p class="fw-bold" id="projectTitle"></p>
+                <p class="text-danger">Cette action est irréversible.</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                  <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
--->
 
-<!-- Modal de confirmation de suppression -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title" id="deleteModalLabel">
-          <i class="fas fa-exclamation-triangle me-2"></i>Confirmer la suppression
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Êtes-vous sûr de vouloir supprimer ce projet ?</p>
-        <p class="fw-bold" id="projectTitle"></p>
-        <p class="text-danger">Cette action est irréversible.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="button" class="btn btn-danger" id="confirmDelete">
-          <i class="fas fa-trash me-1"></i>Supprimer
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- Script de décodage HTML et gestion du dashboard -->
-<!-- Script de décodage HTML et gestion du dashboard -->
-<!-- Script de décodage HTML robuste et gestion du dashboard -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // ==========================================
-    // 1. DÉCODAGE ROBUSTE DES ENTITÉS HTML
-    // ==========================================
+        <!-- Script de décodage HTML et gestion du dashboard -->
+        <!-- Script de décodage HTML et gestion du dashboard -->
+        <!-- Script de décodage HTML robuste et gestion du dashboard -->
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            // ==========================================
+            // GESTION DE L'EXPANSION DES SECTEURS
+            // ==========================================
+            const sectionCollapseButtons = document.querySelectorAll('.secteur-collapse-btn');
 
-    // Fonction de décodage robuste qui gère les encodages multiples
-    function decodeHtmlEntities(text) {
-      if (!text) return text;
+            sectionCollapseButtons.forEach(button => {
+              button.addEventListener('click', function(e) {
+                e.stopPropagation();
 
-      let decoded = text;
+                const axeId = this.getAttribute('data-axe-id');
+                const secteurId = this.getAttribute('data-secteur-id');
+                const detailsId = `details-axe${axeId}-secteur${secteurId}`;
+                const detailsRow = document.getElementById(detailsId);
+                const sectionRow = this.closest('.secteur-row');
+                const icon = this.querySelector('i');
 
-      // Décoder les entités numériques hexadécimales courantes
-      const entities = {
-        '&#x2F;': '/',
-        '&#x27;': "'",
-        '&amp;': '&',
-        '&lt;': '<',
-        '&gt;': '>',
-        '&quot;': '"',
-        '&#x3A;': ':',
-        '&#x2C;': ',',
-        '&#x28;': '(',
-        '&#x29;': ')',
-        '&#xE9;': 'é',
-        '&#xE8;': 'è',
-        '&#xEA;': 'ê',
-        '&#xE0;': 'à',
-        '&#xE2;': 'â',
-        '&#xE7;': 'ç',
-        '&#xF4;': 'ô',
-        '&#xF9;': 'ù',
-        '&#xFB;': 'û',
-        '&#xEF;': 'ï',
-        '&#xEE;': 'î',
-        '&#xC9;': 'É',
-        '&#xC8;': 'È',
-        '&#xCA;': 'Ê',
-        '&#xC0;': 'À'
-      };
+                if (detailsRow) {
+                  const isVisible = detailsRow.style.display !== 'none';
 
-      // Premier passage : décoder &amp; en &
-      decoded = decoded.replace(/&amp;/g, '&');
+                  // Basculer l'affichage
+                  detailsRow.style.display = isVisible ? 'none' : 'table-row';
 
-      // Deuxième passage : décoder toutes les entités
-      Object.keys(entities).forEach(entity => {
-        const regex = new RegExp(entity, 'g');
-        decoded = decoded.replace(regex, entities[entity]);
-      });
+                  // Mettre à jour l'icône et la classe
+                  if (isVisible) {
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                    sectionRow.classList.remove('expanded');
+                  } else {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                    sectionRow.classList.add('expanded');
+                  }
 
-      // Troisième passage : utiliser textarea pour les entités restantes
-      const textarea = document.createElement('textarea');
-      textarea.innerHTML = decoded;
-      decoded = textarea.value;
+                  console.log(`[HierarchicalStats] Axe ${axeId}, Secteur ${secteurId}: ${isVisible ? 'fermé' : 'ouvert'}`);
+                }
+              });
+            });
 
-      // Quatrième passage : nettoyer les entités mal formées (d&...)
-      decoded = decoded.replace(/d&#x27;/g, "d'");
-      decoded = decoded.replace(/l&#x27;/g, "l'");
-      decoded = decoded.replace(/qu&#x27;/g, "qu'");
-      decoded = decoded.replace(/n&#x27;/g, "n'");
-      decoded = decoded.replace(/s&#x27;/g, "s'");
-      decoded = decoded.replace(/j&#x27;/g, "j'");
-      decoded = decoded.replace(/c&#x27;/g, "c'");
-      decoded = decoded.replace(/m&#x27;/g, "m'");
-      decoded = decoded.replace(/t&#x27;/g, "t'");
+            // Gestion du clic sur la ligne pour dépliage
+            const sectionToggles = document.querySelectorAll('.secteur-toggle');
 
-      return decoded;
-    }
+            sectionToggles.forEach(toggle => {
+              toggle.addEventListener('click', function(e) {
+                e.stopPropagation();
 
-    // Décoder TOUS les éléments textuels du tableau
-    console.log('Démarrage du décodage HTML...');
+                const row = this.closest('.secteur-row');
+                const button = row.querySelector('.secteur-collapse-btn');
 
-    // Décoder les intitulés des projets (colonne 2)
-    document.querySelectorAll('tbody tr').forEach(function(row) {
-      // Intitulé (colonne 2 - lien)
-      const intituleLink = row.querySelector('td:nth-child(2) a');
-      if (intituleLink) {
-        const originalText = intituleLink.textContent;
-        intituleLink.textContent = decodeHtmlEntities(originalText);
-        console.log('Intitulé décodé:', originalText, '->', intituleLink.textContent);
-      }
+                if (button) {
+                  button.click();
+                }
+              });
+            });
 
-      // Axe (colonne 3)
-      const axeCell = row.querySelector('td:nth-child(3)');
-      if (axeCell) {
-        axeCell.textContent = decodeHtmlEntities(axeCell.textContent);
-      }
+            console.log('[HierarchicalStats] Initialisation expansion secteurs terminée');
 
-      // Secteur (colonne 4)
-      const secteurCell = row.querySelector('td:nth-child(4)');
-      if (secteurCell) {
-        secteurCell.textContent = decodeHtmlEntities(secteurCell.textContent);
-      }
+            // ==========================================
+            // 1. DÉCODAGE ROBUSTE DES ENTITÉS HTML
+            // ==========================================
 
-      // Bouton supprimer - data-title
-      const deleteBtn = row.querySelector('.delete-project');
-      if (deleteBtn) {
-        const title = deleteBtn.getAttribute('data-title');
-        if (title) {
-          deleteBtn.setAttribute('data-title', decodeHtmlEntities(title));
-        }
-      }
-    });
+            // Fonction de décodage robuste qui gère les encodages multiples
+            function decodeHtmlEntities(text) {
+              if (!text) return text;
 
-    console.log('Décodage HTML terminé');
+              let decoded = text;
 
-    // ==========================================
-    // 2. GESTION DE LA SUPPRESSION DES PROJETS
-    // ==========================================
+              // Décoder les entités numériques hexadécimales courantes
+              const entities = {
+                '&#x2F;': '/',
+                '&#x27;': "'",
+                '&amp;': '&',
+                '&lt;': '<',
+                '&gt;': '>',
+                '&quot;': '"',
+                '&#x3A;': ':',
+                '&#x2C;': ',',
+                '&#x28;': '(',
+                '&#x29;': ')',
+                '&#xE9;': 'é',
+                '&#xE8;': 'è',
+                '&#xEA;': 'ê',
+                '&#xE0;': 'à',
+                '&#xE2;': 'â',
+                '&#xE7;': 'ç',
+                '&#xF4;': 'ô',
+                '&#xF9;': 'ù',
+                '&#xFB;': 'û',
+                '&#xEF;': 'ï',
+                '&#xEE;': 'î',
+                '&#xC9;': 'É',
+                '&#xC8;': 'È',
+                '&#xCA;': 'Ê',
+                '&#xC0;': 'À'
+              };
 
-    const deleteButtons = document.querySelectorAll('.delete-project');
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    let projectIdToDelete = null;
+              // Premier passage : décoder &amp; en &
+              decoded = decoded.replace(/&amp;/g, '&');
 
-    deleteButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        projectIdToDelete = this.getAttribute('data-id');
-        const projectTitle = this.getAttribute('data-title');
-        // Le titre est déjà décodé
-        document.getElementById('projectTitle').textContent = projectTitle;
-        deleteModal.show();
-      });
-    });
+              // Deuxième passage : décoder toutes les entités
+              Object.keys(entities).forEach(entity => {
+                const regex = new RegExp(entity, 'g');
+                decoded = decoded.replace(regex, entities[entity]);
+              });
 
-    document.getElementById('confirmDelete').addEventListener('click', function() {
-      if (projectIdToDelete) {
-        fetch(`/projects/delete/${projectIdToDelete}`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json'
+              // Troisième passage : utiliser textarea pour les entités restantes
+              const textarea = document.createElement('textarea');
+              textarea.innerHTML = decoded;
+              decoded = textarea.value;
+
+              // Quatrième passage : nettoyer les entités mal formées (d&...)
+              decoded = decoded.replace(/d&#x27;/g, "d'");
+              decoded = decoded.replace(/l&#x27;/g, "l'");
+              decoded = decoded.replace(/qu&#x27;/g, "qu'");
+              decoded = decoded.replace(/n&#x27;/g, "n'");
+              decoded = decoded.replace(/s&#x27;/g, "s'");
+              decoded = decoded.replace(/j&#x27;/g, "j'");
+              decoded = decoded.replace(/c&#x27;/g, "c'");
+              decoded = decoded.replace(/m&#x27;/g, "m'");
+              decoded = decoded.replace(/t&#x27;/g, "t'");
+
+              return decoded;
             }
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              deleteModal.hide();
-              window.location.reload();
-            } else {
-              alert('Erreur lors de la suppression: ' + data.message);
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            alert('Une erreur est survenue lors de la suppression.');
+
+            // Décoder TOUS les éléments textuels du tableau
+            console.log('Démarrage du décodage HTML...');
+
+            // Décoder les intitulés des projets (colonne 2)
+            document.querySelectorAll('tbody tr').forEach(function(row) {
+              // Intitulé (colonne 2 - lien)
+              const intituleLink = row.querySelector('td:nth-child(2) a');
+              if (intituleLink) {
+                const originalText = intituleLink.textContent;
+                intituleLink.textContent = decodeHtmlEntities(originalText);
+                console.log('Intitulé décodé:', originalText, '->', intituleLink.textContent);
+              }
+
+              // Axe (colonne 3)
+              const axeCell = row.querySelector('td:nth-child(3)');
+              if (axeCell) {
+                axeCell.textContent = decodeHtmlEntities(axeCell.textContent);
+              }
+
+              // Secteur (colonne 4)
+              const secteurCell = row.querySelector('td:nth-child(4)');
+              if (secteurCell) {
+                secteurCell.textContent = decodeHtmlEntities(secteurCell.textContent);
+              }
+
+              // Bouton supprimer - data-title
+              const deleteBtn = row.querySelector('.delete-project');
+              if (deleteBtn) {
+                const title = deleteBtn.getAttribute('data-title');
+                if (title) {
+                  deleteBtn.setAttribute('data-title', decodeHtmlEntities(title));
+                }
+              }
+            });
+
+            console.log('Décodage HTML terminé');
+
+            // ==========================================
+            // 2. GESTION DE LA SUPPRESSION DES PROJETS
+            // ==========================================
+
+            const deleteButtons = document.querySelectorAll('.delete-project');
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            let projectIdToDelete = null;
+
+            deleteButtons.forEach(button => {
+              button.addEventListener('click', function() {
+                projectIdToDelete = this.getAttribute('data-id');
+                const projectTitle = this.getAttribute('data-title');
+                // Le titre est déjà décodé
+                document.getElementById('projectTitle').textContent = projectTitle;
+                deleteModal.show();
+              });
+            });
+
+            document.getElementById('confirmDelete').addEventListener('click', function() {
+              if (projectIdToDelete) {
+                fetch(`/projects/delete/${projectIdToDelete}`, {
+                    method: 'DELETE',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    }
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                    if (data.success) {
+                      deleteModal.hide();
+                      window.location.reload();
+                    } else {
+                      alert('Erreur lors de la suppression: ' + data.message);
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur est survenue lors de la suppression.');
+                  });
+              }
+            });
+
+            console.log('Dashboard coordinateur initialisé avec décodage HTML robuste');
           });
-      }
-    });
-
-    console.log('Dashboard coordinateur initialisé avec décodage HTML robuste');
-  });
-</script>
+        </script>

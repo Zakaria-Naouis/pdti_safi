@@ -1,10 +1,13 @@
-// controllers/dashboardController.js - CORRECTION COMPLÈTE
+// controllers/dashboardController.js - COMPLET AVEC STATISTIQUES HIÉRARCHIQUES
 
 const Project = require('../models/Project');
 const Instruction = require('../models/Instruction');
 const db = require('../config/database');
 
-// Méthode pour récupérer les statistiques globales
+// ================================================================
+// STATISTIQUES SIMPLES (existantes)
+// ================================================================
+
 exports.getStats = async () => {
   try {
     const result = await db.query(`
@@ -35,8 +38,6 @@ exports.getStats = async () => {
   }
 };
 
-// Récupérer les axes avec leurs statistiques
-// Récupérer les axes avec leurs statistiques
 exports.getAxesWithStats = async () => {
   try {
     const result = await db.query(`
@@ -56,7 +57,6 @@ exports.getAxesWithStats = async () => {
       ORDER BY a.id ASC
     `);
 
-    // ========== NOUVEAU CODE : Calcul des pourcentages ==========
     const axes = result.rows.map(row => ({
       id: row.id,
       lib_axe: row.lib_axe,
@@ -68,10 +68,8 @@ exports.getAxesWithStats = async () => {
       total_beneficiaires: parseInt(row.total_beneficiaires) || 0
     }));
 
-    // Calculer le montant total global de tous les axes
     const montantTotalGlobal = axes.reduce((sum, axe) => sum + axe.cout_total, 0);
 
-    // Ajouter le pourcentage à chaque axe
     return axes.map(axe => ({
       ...axe,
       pourcentage: montantTotalGlobal > 0 
@@ -79,7 +77,6 @@ exports.getAxesWithStats = async () => {
         : '0.00',
       montant_total_global: montantTotalGlobal
     }));
-    // ========== FIN DU NOUVEAU CODE ==========
 
   } catch (error) {
     console.error('Erreur lors de la récupération des axes avec statistiques:', error);
@@ -87,8 +84,6 @@ exports.getAxesWithStats = async () => {
   }
 };
 
-
-// Récupérer les statistiques des instructions
 exports.getInstructionStats = async (userId, profileId) => {
   try {
     let query;
@@ -143,7 +138,6 @@ exports.getInstructionStats = async (userId, profileId) => {
   }
 };
 
-// Méthode pour récupérer les projets paginés par pôle
 exports.getPaginatedProjectsByPole = async (poleId, page = 1, limit = 5) => {
   try {
     const offset = (page - 1) * limit;
@@ -200,7 +194,386 @@ exports.getPaginatedProjectsByPole = async (poleId, page = 1, limit = 5) => {
   }
 };
 
-// Tableau de bord administrateur
+// ================================================================
+// NOUVELLES FONCTIONS POUR STATISTIQUES HIÉRARCHIQUES
+// ================================================================
+// ================================================================
+// À REMPLACER DANS: controllers/dashboardController.js
+// MÉTHODES ADAPTÉES POUR LA NOUVELLE FONCTION SQL
+// ================================================================
+
+/**
+ * Récupère les statistiques hiérarchiques par Axe, Secteur et Objectif
+ * Nouvelles colonnes retournées par get_stats_hierarchy_by_pole:
+ * - level_type (TEXT)
+ * - axe_id (INTEGER)
+ * - axe_libelle (TEXT)
+ * - secteur_id (INTEGER)
+ * - secteur_libelle (TEXT)
+ * - objectif_id (INTEGER)
+ * - objectif_libelle (TEXT)
+ * - nombre_projets (INTEGER)
+ * - cout_total_mdh (NUMERIC)
+ * - total_emplois_directs (BIGINT)
+ * - total_beneficiaires (BIGINT)
+ * - tri_order (INTEGER)
+ */
+exports.getHierarchicalStats = async (poleId) => {
+  try {
+    console.log(`[getHierarchicalStats] Récupération des stats pour pole_id=${poleId}`);
+    
+    const polesResult = await db.query(`SELECT lib_pole FROM poles WHERE id = $1`, [poleId]);
+    const poleLibelle = polesResult.rows[0]?.lib_pole || '';
+    
+    const result = await db.query(`
+      SELECT 
+        level_type,
+        axe_id,
+        axe_libelle,
+        secteur_id,
+        secteur_libelle,
+        objectif_id,
+        objectif_libelle,
+        nombre_projets,
+        cout_total_mdh,
+        total_emplois_directs,
+        total_beneficiaires,
+        tri_order
+      FROM public.get_stats_hierarchy_by_pole($1)
+      ORDER BY tri_order, axe_id, secteur_id
+    `, [poleId]);
+    
+    // Ajouter le libellé du pôle à chaque ligne pour l'utiliser dans buildHierarchicalStructure
+    result.rows = result.rows.map(row => ({...row, lib_pole: poleLibelle}));
+    
+    console.log(`[getHierarchicalStats] ${result.rows.length} lignes retournées`);
+    return result.rows;
+  } catch (error) {
+    console.error('[getHierarchicalStats] Erreur:', error.message);
+    return [];
+  }
+};
+
+/**
+ * Transforme les données brutes en structure hiérarchique arborescente
+ * Adaptée aux nouvelles colonnes SQL
+ */
+function buildHierarchicalStructure(data) {
+  try {
+    const hierarchy = [];
+    let currentAxe = null;
+    let currentSecteur = null;
+    
+    // Filtrer uniquement les lignes de type OBJECTIF pour construire la hiérarchie
+    const objectifRows = data.filter(row => row.level_type === 'OBJECTIF');
+    
+    console.log(`[buildHierarchicalStructure] Traitement de ${objectifRows.length} objectifs`);
+    
+    objectifRows.forEach(row => {
+      // Créer un nouvel axe si différent du précédent
+      if (!currentAxe || row.axe_id !== currentAxe.axe_id) {
+        currentAxe = {
+          axe_id: row.axe_id,
+          axe_libelle: row.axe_libelle,
+          pole_libelle: row.lib_pole,
+          secteurs: [],
+          stats: {
+            nombre_projets: 0,
+            cout_total_mdh: 0,
+            total_emplois_directs: 0,
+            total_beneficiaires: 0
+          }
+        };
+        hierarchy.push(currentAxe);
+        currentSecteur = null;
+      }
+      
+      // Créer un nouveau secteur si différent du précédent
+      if (row.secteur_id && (!currentSecteur || row.secteur_id !== currentSecteur.secteur_id)) {
+        currentSecteur = {
+          secteur_id: row.secteur_id,
+          secteur_libelle: row.secteur_libelle,
+          objectifs: [],
+          stats: {
+            nombre_projets: 0,
+            cout_total_mdh: 0,
+            total_emplois_directs: 0,
+            total_beneficiaires: 0
+          }
+        };
+        if (currentAxe) {
+          currentAxe.secteurs.push(currentSecteur);
+        }
+      }
+      
+      // Ajouter l'objectif au secteur actuel
+      if (currentSecteur) {
+        currentSecteur.objectifs.push({
+          objectif_id: row.objectif_id,
+          objectif_libelle: row.objectif_libelle,
+          nombre_projets: parseInt(row.nombre_projets || 0),
+          cout_total_mdh: parseFloat(row.cout_total_mdh || 0),
+          total_emplois_directs: parseInt(row.total_emplois_directs || 0),
+          total_beneficiaires: parseInt(row.total_beneficiaires || 0)
+        });
+        
+        // Mise à jour des stats du secteur
+        currentSecteur.stats.nombre_projets += parseInt(row.nombre_projets || 0);
+        currentSecteur.stats.cout_total_mdh += parseFloat(row.cout_total_mdh || 0);
+        currentSecteur.stats.total_emplois_directs += parseInt(row.total_emplois_directs || 0);
+        currentSecteur.stats.total_beneficiaires += parseInt(row.total_beneficiaires || 0);
+      }
+    });
+    
+    // Finaliser les stats des axes
+    hierarchy.forEach(axe => {
+      axe.secteurs.forEach(secteur => {
+        axe.stats.nombre_projets += secteur.stats.nombre_projets;
+        axe.stats.cout_total_mdh += secteur.stats.cout_total_mdh;
+        axe.stats.total_emplois_directs += secteur.stats.total_emplois_directs;
+        axe.stats.total_beneficiaires += secteur.stats.total_beneficiaires;
+      });
+    });
+    
+    console.log(`[buildHierarchicalStructure] Structure construite avec ${hierarchy.length} axes`);
+    return hierarchy;
+  } catch (error) {
+    console.error('[buildHierarchicalStructure] Erreur:', error.message);
+    return [];
+  }
+}
+
+exports.buildHierarchicalStructure = buildHierarchicalStructure;
+
+// ================================================================
+// À AJOUTER/REMPLACER DANS: controllers/dashboardController.js
+// MÉTHODES POUR LE PROFIL GOUVERNEUR
+// Affiche ALL Axes avec statistiques globales
+// ================================================================
+
+/**
+ * Récupère les statistiques hiérarchiques pour TOUS les pôles (Gouverneur)
+ * @returns {Array} Données brutes de tous les axes
+ */
+exports.getHierarchicalStatsGlobal = async () => {
+  try {
+    console.log('[getHierarchicalStatsGlobal] Récupération des stats GLOBALES (tous les pôles)');
+    
+    const result = await db.query(`
+      WITH stats_by_objectif AS (
+        SELECT 
+          a.id as axe_id,
+          a.lib_axe as axe_libelle,
+          a.pole_id,
+          po.lib_pole as pole_libelle,
+          s.id as secteur_id,
+          s.lib_secteur as secteur_libelle,
+          o.id as objectif_id,
+          o.nom_objectif as objectif_libelle,
+          COUNT(p.id) as nombre_projets,
+          COALESCE(SUM(p.cout_total_mdh), 0)::NUMERIC as cout_total_mdh,
+          COALESCE(SUM(p.nbr_emplois_directs), 0)::BIGINT as total_emplois_directs,
+          COALESCE(SUM(p.nbr_beneficiaires), 0)::BIGINT as total_beneficiaires
+        FROM axes a
+        LEFT JOIN projets p ON p.axe_id = a.id
+        LEFT JOIN secteurs s ON p.secteur_id = s.id
+        LEFT JOIN objectifs o ON p.objectif_id = o.id
+        LEFT JOIN poles po ON a.pole_id = po.id
+        GROUP BY a.id, a.lib_axe, a.pole_id, po.lib_pole, s.id, s.lib_secteur, o.id, o.nom_objectif
+      )
+      SELECT 
+        'OBJECTIF'::TEXT as level_type,
+        axe_id,
+        axe_libelle,
+        pole_id,
+        pole_libelle,
+        secteur_id,
+        secteur_libelle,
+        objectif_id,
+        objectif_libelle,
+        nombre_projets,
+        cout_total_mdh,
+        total_emplois_directs,
+        total_beneficiaires,
+        ROW_NUMBER() OVER (ORDER BY axe_id, secteur_id, objectif_id)::INTEGER as tri_order
+      FROM stats_by_objectif
+      WHERE objectif_id IS NOT NULL
+      
+      UNION ALL
+      
+      SELECT 
+        'SOUS-TOTAL SECTEUR'::TEXT,
+        a.id, a.lib_axe, a.pole_id, po.lib_pole,
+        s.id, s.lib_secteur,
+        NULL::INTEGER, 'SOUS-TOTAL SECTEUR'::TEXT,
+        SUM(sbo.nombre_projets)::INTEGER,
+        SUM(sbo.cout_total_mdh)::NUMERIC,
+        SUM(sbo.total_emplois_directs)::BIGINT,
+        SUM(sbo.total_beneficiaires)::BIGINT,
+        (ROW_NUMBER() OVER (PARTITION BY a.id ORDER BY s.id) * 1000 + 1)::INTEGER
+      FROM stats_by_objectif sbo
+      JOIN axes a ON sbo.axe_id = a.id
+      JOIN poles po ON a.pole_id = po.id
+      JOIN secteurs s ON sbo.secteur_id = s.id
+      GROUP BY a.id, a.lib_axe, a.pole_id, po.lib_pole, s.id, s.lib_secteur
+      
+      UNION ALL
+      
+      SELECT 
+        'SOUS-TOTAL AXE'::TEXT,
+        a.id, a.lib_axe, a.pole_id, po.lib_pole,
+        NULL::INTEGER, 'SOUS-TOTAL AXE'::TEXT,
+        NULL::INTEGER, NULL::TEXT,
+        SUM(sbo.nombre_projets)::INTEGER,
+        SUM(sbo.cout_total_mdh)::NUMERIC,
+        SUM(sbo.total_emplois_directs)::BIGINT,
+        SUM(sbo.total_beneficiaires)::BIGINT,
+        (ROW_NUMBER() OVER (ORDER BY a.id) * 10000 + 1)::INTEGER
+      FROM stats_by_objectif sbo
+      JOIN axes a ON sbo.axe_id = a.id
+      JOIN poles po ON a.pole_id = po.id
+      GROUP BY a.id, a.lib_axe, a.pole_id, po.lib_pole
+      
+      UNION ALL
+      
+      SELECT 
+        'TOTAL GENERAL'::TEXT,
+        NULL::INTEGER, 'TOTAL GÉNÉRAL'::TEXT, NULL::INTEGER, NULL::TEXT,
+        NULL::INTEGER, NULL::TEXT,
+        NULL::INTEGER, NULL::TEXT,
+        SUM(sbo.nombre_projets)::INTEGER,
+        SUM(sbo.cout_total_mdh)::NUMERIC,
+        SUM(sbo.total_emplois_directs)::BIGINT,
+        SUM(sbo.total_beneficiaires)::BIGINT,
+        999999::INTEGER
+      FROM stats_by_objectif sbo
+      
+      ORDER BY tri_order, axe_id, secteur_id
+    `);
+    
+    console.log(`[getHierarchicalStatsGlobal] ${result.rows.length} lignes retournées`);
+    return result.rows;
+  } catch (error) {
+    console.error('[getHierarchicalStatsGlobal] Erreur:', error.message);
+    return [];
+  }
+};
+
+/**
+ * Transforme les données brutes en structure hiérarchique pour Gouverneur
+ * Inclut les informations du pôle
+ */
+function buildGlobalHierarchicalStructure(data) {
+  try {
+    const hierarchy = [];
+    const totalStats = {
+      nombre_projets: 0,
+      cout_total_mdh: 0,
+      total_emplois_directs: 0,
+      total_beneficiaires: 0
+    };
+    
+    let currentAxe = null;
+    let currentSecteur = null;
+    
+    // Filtrer uniquement les lignes de type OBJECTIF
+    const objectifRows = data.filter(row => row.level_type === 'OBJECTIF');
+    
+    console.log(`[buildGlobalHierarchicalStructure] Traitement de ${objectifRows.length} objectifs`);
+    
+    objectifRows.forEach(row => {
+      // Créer un nouvel axe si différent
+      if (!currentAxe || row.axe_id !== currentAxe.axe_id) {
+        currentAxe = {
+          axe_id: row.axe_id,
+          axe_libelle: row.axe_libelle,
+          pole_id: row.pole_id,
+          pole_libelle: row.pole_libelle,
+          secteurs: [],
+          stats: {
+            nombre_projets: 0,
+            cout_total_mdh: 0,
+            total_emplois_directs: 0,
+            total_beneficiaires: 0
+          }
+        };
+        hierarchy.push(currentAxe);
+        currentSecteur = null;
+      }
+      
+      // Créer un nouveau secteur si différent
+      if (row.secteur_id && (!currentSecteur || row.secteur_id !== currentSecteur.secteur_id)) {
+        currentSecteur = {
+          secteur_id: row.secteur_id,
+          secteur_libelle: row.secteur_libelle,
+          objectifs: [],
+          stats: {
+            nombre_projets: 0,
+            cout_total_mdh: 0,
+            total_emplois_directs: 0,
+            total_beneficiaires: 0
+          }
+        };
+        if (currentAxe) {
+          currentAxe.secteurs.push(currentSecteur);
+        }
+      }
+      
+      // Ajouter l'objectif
+      if (currentSecteur) {
+        currentSecteur.objectifs.push({
+          objectif_id: row.objectif_id,
+          objectif_libelle: row.objectif_libelle,
+          nombre_projets: parseInt(row.nombre_projets || 0),
+          cout_total_mdh: parseFloat(row.cout_total_mdh || 0),
+          total_emplois_directs: parseInt(row.total_emplois_directs || 0),
+          total_beneficiaires: parseInt(row.total_beneficiaires || 0)
+        });
+        
+        // Mettre à jour les stats du secteur
+        currentSecteur.stats.nombre_projets += parseInt(row.nombre_projets || 0);
+        currentSecteur.stats.cout_total_mdh += parseFloat(row.cout_total_mdh || 0);
+        currentSecteur.stats.total_emplois_directs += parseInt(row.total_emplois_directs || 0);
+        currentSecteur.stats.total_beneficiaires += parseInt(row.total_beneficiaires || 0);
+      }
+    });
+    
+    // Finaliser les stats des axes et globales
+    hierarchy.forEach(axe => {
+      axe.secteurs.forEach(secteur => {
+        axe.stats.nombre_projets += secteur.stats.nombre_projets;
+        axe.stats.cout_total_mdh += secteur.stats.cout_total_mdh;
+        axe.stats.total_emplois_directs += secteur.stats.total_emplois_directs;
+        axe.stats.total_beneficiaires += secteur.stats.total_beneficiaires;
+      });
+      
+      // Ajouter aux totaux généraux
+      totalStats.nombre_projets += axe.stats.nombre_projets;
+      totalStats.cout_total_mdh += axe.stats.cout_total_mdh;
+      totalStats.total_emplois_directs += axe.stats.total_emplois_directs;
+      totalStats.total_beneficiaires += axe.stats.total_beneficiaires;
+    });
+    
+    const result = {
+      axes: hierarchy,
+      totalStats: totalStats
+    };
+    
+    console.log(`[buildGlobalHierarchicalStructure] ${hierarchy.length} axes construits`);
+    return result;
+  } catch (error) {
+    console.error('[buildGlobalHierarchicalStructure] Erreur:', error.message);
+    return { axes: [], totalStats: {} };
+  }
+}
+
+exports.buildGlobalHierarchicalStructure = buildGlobalHierarchicalStructure;
+
+
+// ================================================================
+// TABLEAU DE BORD ADMINISTRATEUR
+// ================================================================
+
 exports.getAdminDashboard = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -292,13 +665,19 @@ exports.getAdminDashboard = async (req, res) => {
   }
 };
 
-// Tableau de bord gouverneur / SG
+// ================================================================
+// TABLEAU DE BORD GOUVERNEUR - MODIFIÉ
+// ================================================================
+
 exports.getGouverneurDashboard = async (req, res) => {
   try {
+    console.log('[getGouverneurDashboard] Accès par utilisateur:', req.user.email);
+    
     const stats = await this.getStats();
-    const poles = await db.query('SELECT * FROM poles');
+    const poles = await db.query('SELECT * FROM poles ORDER BY id ASC');
     const polesStats = [];
    
+    // Récupérer les stats par pôle
     for (const pole of poles.rows) {
       const poleStats = await Project.getStatsByPole(pole.id);
       polesStats.push({
@@ -317,19 +696,28 @@ exports.getGouverneurDashboard = async (req, res) => {
       emetteur_id: req.user.id,
       limit: 5
     });
+    
+    // NOUVEAU: Récupérer les statistiques hiérarchiques GLOBALES (tous les axes)
+    const hierarchicalStatsDataGlobal = await this.getHierarchicalStatsGlobal();
+    const globalHierarchy = this.buildGlobalHierarchicalStructure(hierarchicalStatsDataGlobal);
 
     res.render('dashboard/gouverneur', {
       title: 'Tableau de bord - PDTI Safi',
-      pageTitle: 'Tableau de bord',
+      pageTitle: 'Tableau de bord Gouverneur',
       stats: stats,
       polesStats: polesStats,
       axesWithStats: axesWithStats,
       instructionStats: instructionStats,
       recentProjects: recentProjects || [],
-      recentInstructions: recentInstructions || []
+      recentInstructions: recentInstructions || [],
+      // NOUVEAU: Passer les données hiérarchiques globales
+      globalHierarchy: globalHierarchy.axes,
+      globalTotalStats: globalHierarchy.totalStats,
+      globalHierarchyJSON: JSON.stringify(globalHierarchy.axes),
+      globalTotalStatsJSON: JSON.stringify(globalHierarchy.totalStats)
     });
   } catch (error) {
-    console.error('Erreur lors de l\'affichage du tableau de bord:', error);
+    console.error('Erreur lors de l\'affichage du tableau de bord gouverneur:', error);
     res.status(500).render('error', {
       title: 'Erreur',
       pageTitle: 'Erreur 500',
@@ -338,27 +726,104 @@ exports.getGouverneurDashboard = async (req, res) => {
   }
 };
 
-// Route API : Récupérer les projets par axe - CORRECTION IMPORTANTE
+// ================================================================
+// TABLEAU DE BORD COORDINATEUR - MODIFIÉ
+// ================================================================
+
+exports.getCoordinateurDashboard = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const stats = await Project.getStatsByPole(req.user.pole_id);
+    const projectsData = await this.getPaginatedProjectsByPole(req.user.pole_id, page);
+    const pendingInstructions = await Instruction.findAll({
+      destinataire_id: req.user.id,
+      statut_id: 2
+    });
+    const pendingCount = await Instruction.getPendingCount(req.user.id);
+    
+    // Récupérer les statistiques hiérarchiques
+    const hierarchicalStatsData = await this.getHierarchicalStats(req.user.pole_id);
+    const hierarchicalStats = buildHierarchicalStructure(hierarchicalStatsData);
+
+    res.render('dashboard/coordinateur', {
+      title: 'Tableau de bord coordinateur - PDTI Safi',
+      pageTitle: 'Tableau de bord coordinateur',
+      stats: {
+        total_projets: parseInt(stats.total_projets) || 0,
+        cout_total: parseFloat(stats.cout_total) || 0,
+        total_emplois: parseInt(stats.total_emplois) || 0,
+        total_beneficiaires: parseInt(stats.total_beneficiaires) || 0
+      },
+      projects: projectsData.projects,
+      pagination: projectsData.pagination,
+      pendingInstructions: pendingInstructions || [],
+      pendingCount: pendingCount || 0,
+      hierarchicalStats: hierarchicalStats,
+      hierarchicalStatsJSON: JSON.stringify(hierarchicalStats)
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'affichage du tableau de bord coordinateur:', error);
+    res.status(500).render('error', {
+      title: 'Erreur',
+      pageTitle: 'Erreur 500',
+      message: 'Une erreur est survenue lors de l\'affichage du tableau de bord.'
+    });
+  }
+};
+
+// ================================================================
+// TABLEAU DE BORD CHEF DE PÔLE - MODIFIÉ
+// ================================================================
+
+exports.getChefPoleDashboard = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const stats = await Project.getStatsByPole(req.user.pole_id);
+    const projectsData = await this.getPaginatedProjectsByPole(req.user.pole_id, page);
+    
+    // Récupérer les statistiques hiérarchiques
+    const hierarchicalStatsData = await this.getHierarchicalStats(req.user.pole_id);
+    const hierarchicalStats = buildHierarchicalStructure(hierarchicalStatsData);
+
+    res.render('dashboard/chefPole', {
+      title: 'Tableau de bord chef de pôle - PDTI Safi',
+      pageTitle: 'Tableau de bord chef de pôle',
+      stats: {
+        total_projets: parseInt(stats.total_projets) || 0,
+        cout_total: parseFloat(stats.cout_total) || 0,
+        total_emplois: parseInt(stats.total_emplois) || 0,
+        total_beneficiaires: parseInt(stats.total_beneficiaires) || 0
+      },
+      projects: projectsData.projects,
+      pagination: projectsData.pagination,
+      hierarchicalStats: hierarchicalStats,
+      hierarchicalStatsJSON: JSON.stringify(hierarchicalStats)
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'affichage du tableau de bord chef de pôle:', error);
+    res.status(500).render('error', {
+      title: 'Erreur',
+      pageTitle: 'Erreur 500',
+      message: 'Une erreur est survenue lors de l\'affichage du tableau de bord.'
+    });
+  }
+};
+
+// ================================================================
+// ROUTE API : RÉCUPÉRER LES PROJETS PAR AXE
+// ================================================================
+
 exports.getProjectsByAxe = async (req, res) => {
   try {
     const axeId = parseInt(req.params.axeId);
 
-    console.log('=== DEBUG getProjectsByAxe ===');
-    console.log('1. Paramètre reçu:', req.params.axeId);
-    console.log('2. axeId parsé:', axeId);
-    console.log('3. Type de axeId:', typeof axeId);
-    console.log('4. isNaN(axeId):', isNaN(axeId));
-
     if (!axeId || isNaN(axeId) || axeId < 1) {
-      console.error('ID d\'axe invalide:', req.params.axeId);
       return res.status(400).json({
         success: false,
         message: 'ID d\'axe invalide',
         data: []
       });
     }
-
-    console.log('5. Requête SQL pour l\'axe:', axeId);
 
     const projects = await db.query(`
       SELECT 
@@ -384,9 +849,6 @@ exports.getProjectsByAxe = async (req, res) => {
       ORDER BY p.num_projet ASC
     `, [axeId]);
 
-    console.log('6. Nombre de projets trouvés:', projects.rows.length);
-    console.log('7. Projets:', projects.rows);
-
     res.json({
       success: true,
       data: projects.rows,
@@ -394,20 +856,16 @@ exports.getProjectsByAxe = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('=== ERREUR getProjectsByAxe ===');
-    console.error('Erreur complète:', error);
-    console.error('Stack trace:', error.stack);
-    
+    console.error('ERREUR getProjectsByAxe:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur lors de la récupération des projets',
+      message: 'Erreur serveur',
       error: error.message,
       data: []
     });
   }
 };
 
-// Récupérer les objectifs par axe
 exports.getObjectifsByAxe = async (axeId) => {
   try {
     const result = await db.query(`
@@ -421,70 +879,5 @@ exports.getObjectifsByAxe = async (axeId) => {
   } catch (error) {
     console.error('Erreur lors de la récupération des objectifs:', error);
     return [];
-  }
-};
-
-// Tableau de bord coordinateur
-exports.getCoordinateurDashboard = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const stats = await Project.getStatsByPole(req.user.pole_id);
-    const projectsData = await this.getPaginatedProjectsByPole(req.user.pole_id, page);
-    const pendingInstructions = await Instruction.findAll({
-      destinataire_id: req.user.id,
-      statut_id: 2
-    });
-    const pendingCount = await Instruction.getPendingCount(req.user.id);
-
-    res.render('dashboard/coordinateur', {
-      title: 'Tableau de bord coordinateur - PDTI Safi',
-      pageTitle: 'Tableau de bord coordinateur',
-      stats: {
-        total_projets: parseInt(stats.total_projets) || 0,
-        cout_total: parseFloat(stats.cout_total) || 0,
-        total_emplois: parseInt(stats.total_emplois) || 0,
-        total_beneficiaires: parseInt(stats.total_beneficiaires) || 0
-      },
-      projects: projectsData.projects,
-      pagination: projectsData.pagination,
-      pendingInstructions: pendingInstructions || [],
-      pendingCount: pendingCount || 0
-    });
-  } catch (error) {
-    console.error('Erreur lors de l\'affichage du tableau de bord coordinateur:', error);
-    res.status(500).render('error', {
-      title: 'Erreur',
-      pageTitle: 'Erreur 500',
-      message: 'Une erreur est survenue lors de l\'affichage du tableau de bord.'
-    });
-  }
-};
-
-// Tableau de bord chef de pôle
-exports.getChefPoleDashboard = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const stats = await Project.getStatsByPole(req.user.pole_id);
-    const projectsData = await this.getPaginatedProjectsByPole(req.user.pole_id, page);
-
-    res.render('dashboard/chefPole', {
-      title: 'Tableau de bord chef de pôle - PDTI Safi',
-      pageTitle: 'Tableau de bord chef de pôle',
-      stats: {
-        total_projets: parseInt(stats.total_projets) || 0,
-        cout_total: parseFloat(stats.cout_total) || 0,
-        total_emplois: parseInt(stats.total_emplois) || 0,
-        total_beneficiaires: parseInt(stats.total_beneficiaires) || 0
-      },
-      projects: projectsData.projects,
-      pagination: projectsData.pagination
-    });
-  } catch (error) {
-    console.error('Erreur lors de l\'affichage du tableau de bord chef de pôle:', error);
-    res.status(500).render('error', {
-      title: 'Erreur',
-      pageTitle: 'Erreur 500',
-      message: 'Une erreur est survenue lors de l\'affichage du tableau de bord.'
-    });
   }
 };
