@@ -39,11 +39,15 @@
 
 /* Réduction de l'espace sur les accordéons */
 .accordion {
-  margin-bottom: 8px !important;  /* Réduit de 3px à 8px */
+  margin-bottom: 15px !important;
+  background-color: transparent !important;
+  border: none !important;
 }
 
 .accordion-item {
   margin-bottom: 0 !important;
+  background-color: transparent !important;
+  border: none !important;
 }
 
 /* Réduction des marges des éléments statistiques */
@@ -606,4 +610,326 @@ a:hover {
     padding: 4px 8px;
     font-size: 0.75rem;
   }
+}
+/* ================================================================
+   STYLES POUR LES PANNEAUX D'AXES GLOBAUX PAR POLE
+   ================================================================ */
+
+/* Pole Investissement et Promotion de l'Emploi #BF9000 */
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #BF9000"] {
+  background-color: rgba(191, 144, 0, 0.08) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #BF9000"] .accordion-item {
+  background-color: rgba(191, 144, 0, 0.03) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #BF9000"] .accordion-header {
+  background-color: rgba(191, 144, 0, 0.1) !important;
+}
+
+/* Pole Renforcement services sociaux Education #DD6615 */
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #DD6615"] {
+  background-color: rgba(221, 102, 21, 0.08) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #DD6615"] .accordion-item {
+  background-color: rgba(221, 102, 21, 0.03) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #DD6615"] .accordion-header {
+  background-color: rgba(221, 102, 21, 0.1) !important;
+}
+
+/* Pole Renforcement services sociaux Sante #385623 */
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #385623"] {
+  background-color: rgba(56, 86, 35, 0.08) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #385623"] .accordion-item {
+  background-color: rgba(56, 86, 35, 0.03) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #385623"] .accordion-header {
+  background-color: rgba(56, 86, 35, 0.1) !important;
+}
+
+/* Pole Ressources en eau #002060 */
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #002060"] {
+  background-color: rgba(0, 32, 96, 0.08) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #002060"] .accordion-item {
+  background-color: rgba(0, 32, 96, 0.03) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #002060"] .accordion-header {
+  background-color: rgba(0, 32, 96, 0.1) !important;
+}
+
+/* Pole Mise a Niveau Territoriale #595959 */
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #595959"] {
+  background-color: rgba(89, 89, 89, 0.08) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #595959"] .accordion-item {
+  background-color: rgba(89, 89, 89, 0.03) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="border-left: 5px solid #595959"] .accordion-header {
+  background-color: rgba(89, 89, 89, 0.1) !important;
+}
+/* ================================================================
+   STYLES COMPLETS POUR PANNEAUX D'AXES PAR PÔLE
+   ================================================================ */
+
+#globalHierarchicalStatsContainer .accordion.axe-themed {
+  margin-bottom: 15px !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed .accordion-item {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+/* ========== PÔLE INVESTISSEMENT #BF9000 ========== */
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#BF9000"] {
+  border-left: 5px solid #BF9000 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#BF9000"] .accordion-button {
+  background-color: #FFF8E7 !important;
+  border: none !important;
+  padding: 12px 15px !important;
+  color: #333 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#BF9000"] .accordion-button:not(.collapsed) {
+  background-color: #FFF8E7 !important;
+  box-shadow: none !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#BF9000"] .table {
+  background-color: rgba(191, 144, 0, 0.06) !important;
+  margin-bottom: 0 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#BF9000"] .table thead {
+  background-color: rgba(191, 144, 0, 0.15) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#BF9000"] .table thead th {
+  background-color: rgba(191, 144, 0, 0.15) !important;
+  color: #333 !important;
+  border: none !important;
+  font-weight: bold !important;
+  padding: 10px !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#BF9000"] .table tbody tr {
+  background-color: white !important;
+  border-bottom: 1px solid rgba(191, 144, 0, 0.1) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#BF9000"] .table tbody tr:hover {
+  background-color: rgba(191, 144, 0, 0.08) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#BF9000"] .table tbody td {
+  padding: 8px 10px !important;
+  color: #333 !important;
+}
+
+/* ========== PÔLE ÉDUCATION #DD6615 ========== */
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#DD6615"] {
+  border-left: 5px solid #DD6615 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#DD6615"] .accordion-button {
+  background-color: #FFE8D6 !important;
+  border: none !important;
+  padding: 12px 15px !important;
+  color: #333 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#DD6615"] .accordion-button:not(.collapsed) {
+  background-color: #FFE8D6 !important;
+  box-shadow: none !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#DD6615"] .table {
+  background-color: rgba(221, 102, 21, 0.06) !important;
+  margin-bottom: 0 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#DD6615"] .table thead {
+  background-color: rgba(221, 102, 21, 0.15) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#DD6615"] .table thead th {
+  background-color: rgba(221, 102, 21, 0.15) !important;
+  color: #333 !important;
+  border: none !important;
+  font-weight: bold !important;
+  padding: 10px !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#DD6615"] .table tbody tr {
+  background-color: white !important;
+  border-bottom: 1px solid rgba(221, 102, 21, 0.1) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#DD6615"] .table tbody tr:hover {
+  background-color: rgba(221, 102, 21, 0.08) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#DD6615"] .table tbody td {
+  padding: 8px 10px !important;
+  color: #333 !important;
+}
+
+/* ========== PÔLE SANTÉ #385623 ========== */
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#385623"] {
+  border-left: 5px solid #385623 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#385623"] .accordion-button {
+  background-color: #E8F0E0 !important;
+  border: none !important;
+  padding: 12px 15px !important;
+  color: #333 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#385623"] .accordion-button:not(.collapsed) {
+  background-color: #E8F0E0 !important;
+  box-shadow: none !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#385623"] .table {
+  background-color: rgba(56, 86, 35, 0.06) !important;
+  margin-bottom: 0 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#385623"] .table thead {
+  background-color: rgba(56, 86, 35, 0.15) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#385623"] .table thead th {
+  background-color: rgba(56, 86, 35, 0.15) !important;
+  color: #333 !important;
+  border: none !important;
+  font-weight: bold !important;
+  padding: 10px !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#385623"] .table tbody tr {
+  background-color: white !important;
+  border-bottom: 1px solid rgba(56, 86, 35, 0.1) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#385623"] .table tbody tr:hover {
+  background-color: rgba(56, 86, 35, 0.08) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#385623"] .table tbody td {
+  padding: 8px 10px !important;
+  color: #333 !important;
+}
+
+/* ========== PÔLE RESSOURCES EAU #002060 ========== */
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#002060"] {
+  border-left: 5px solid #002060 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#002060"] .accordion-button {
+  background-color: #E6E6F0 !important;
+  border: none !important;
+  padding: 12px 15px !important;
+  color: #333 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#002060"] .accordion-button:not(.collapsed) {
+  background-color: #E6E6F0 !important;
+  box-shadow: none !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#002060"] .table {
+  background-color: rgba(0, 32, 96, 0.06) !important;
+  margin-bottom: 0 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#002060"] .table thead {
+  background-color: rgba(0, 32, 96, 0.15) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#002060"] .table thead th {
+  background-color: rgba(0, 32, 96, 0.15) !important;
+  color: #333 !important;
+  border: none !important;
+  font-weight: bold !important;
+  padding: 10px !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#002060"] .table tbody tr {
+  background-color: white !important;
+  border-bottom: 1px solid rgba(0, 32, 96, 0.1) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#002060"] .table tbody tr:hover {
+  background-color: rgba(0, 32, 96, 0.08) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#002060"] .table tbody td {
+  padding: 8px 10px !important;
+  color: #333 !important;
+}
+
+/* ========== PÔLE AMÉNAGEMENT #595959 ========== */
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#595959"] {
+  border-left: 5px solid #595959 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#595959"] .accordion-button {
+  background-color: #F0F0F0 !important;
+  border: none !important;
+  padding: 12px 15px !important;
+  color: #333 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#595959"] .accordion-button:not(.collapsed) {
+  background-color: #F0F0F0 !important;
+  box-shadow: none !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#595959"] .table {
+  background-color: rgba(89, 89, 89, 0.06) !important;
+  margin-bottom: 0 !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#595959"] .table thead {
+  background-color: rgba(89, 89, 89, 0.15) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#595959"] .table thead th {
+  background-color: rgba(89, 89, 89, 0.15) !important;
+  color: #333 !important;
+  border: none !important;
+  font-weight: bold !important;
+  padding: 10px !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#595959"] .table tbody tr {
+  background-color: white !important;
+  border-bottom: 1px solid rgba(89, 89, 89, 0.1) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#595959"] .table tbody tr:hover {
+  background-color: rgba(89, 89, 89, 0.08) !important;
+}
+
+#globalHierarchicalStatsContainer .accordion.axe-themed[style*="#595959"] .table tbody td {
+  padding: 8px 10px !important;
+  color: #333 !important;
 }
