@@ -199,7 +199,7 @@
 
                   <div class="col-md-6 mb-3">
                     <label for="intitule" class="form-label required-field">Intitulé du projet</label>
-                    <textarea class="form-control" id="intitule" name="intitule" rows="3" required minlength="10" maxlength="500" data-validate="required,minlength:10"><%= project ? project.intitule : '' %></textarea>
+                    <textarea class="form-control" id="intitule" name="intitule" rows="3" required minlength="10" maxlength="500" data-validate="required,minlength:10"><%- project ? project.intitule : '' %></textarea>
                     <div class="validation-message" id="intitule_message"></div>
                     <div class="form-text">
                       <span id="intitule_count">0</span>/500 caractères
@@ -210,7 +210,7 @@
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="objectifs" class="form-label"> Détails Objectifs</label>
-                    <textarea class="form-control" id="objectifs" name="objectifs" rows="3" maxlength="1000"><%= project ? project.objectifs : '' %></textarea>
+                    <textarea class="form-control" id="objectifs" name="objectifs" rows="3" maxlength="1000"><%- project ? project.objectifs : '' %></textarea>
                     <div class="form-text">
                       <span id="objectifs_count">0</span>/10000 caractères
                     </div>
@@ -218,7 +218,7 @@
 
                   <div class="col-md-6 mb-3">
                     <label for="composantes" class="form-label">Composantes</label>
-                    <textarea class="form-control" id="composantes" name="composantes" rows="3" maxlength="1000"><%= project ? project.composantes : '' %></textarea>
+                    <textarea class="form-control" id="composantes" name="composantes" rows="3" maxlength="1000"><%- project ? project.composantes : '' %></textarea>
                     <div class="form-text">
                       <span id="composantes_count">0</span>/10000 caractères
                     </div>
@@ -233,7 +233,7 @@
                         <option value="">Sélectionner un objectif...</option>
                         <% objectifs.forEach(function(objectif) { %>
                         <option value="<%= objectif.id %>" data-axe="<%= objectif.axe_id %>" <%= project && project.objectif_id == objectif.id ? 'selected' : '' %>>
-                          <%= objectif.nom_objectif %>
+                          <%- objectif.nom_objectif %>
                         </option>
                         <% }); %>
                       </select>
@@ -244,7 +244,7 @@
                 <div class="row">
                   <div class="col-md-12 mb-3">
                     <label for="indicateurs" class="form-label">Indicateurs à améliorer</label>
-                    <textarea class="form-control" id="indicateurs" name="indicateurs" rows="3" maxlength="10000" data-validate="maxlength:10000"><%= project ? project.indicateurs : '' %></textarea>
+                    <textarea class="form-control" id="indicateurs" name="indicateurs" rows="3" maxlength="10000" data-validate="maxlength:10000"><%- project ? project.indicateurs : '' %></textarea>
                     <div class="form-text">
                       <span id="indicateurs_count">0</span>/10000 caractères
                     </div>
@@ -315,7 +315,7 @@
 
                 <div class="mb-3">
                   <label for="detail_cout" class="form-label">Détail du coût</label>
-                  <textarea class="form-control" id="detail_cout" name="detail_cout" rows="2" maxlength="1000"><%= project ? project.detail_cout : '' %></textarea>
+                  <textarea class="form-control" id="detail_cout" name="detail_cout" rows="2" maxlength="1000"><%- project ? project.detail_cout : '' %></textarea>
                   <div class="form-text">
                     <span id="detail_cout_count">0</span>/1000 caractères
                   </div>
@@ -358,7 +358,7 @@
 
                   <div class="col-md-6 mb-3">
                     <label for="detail_nbr_beneficiaires" class="form-label">Détail des bénéficiaires</label>
-                    <textarea class="form-control" id="detail_nbr_beneficiaires" name="detail_nbr_beneficiaires" rows="2" maxlength="500"><%= project ? project.detail_nbr_beneficiaires : '' %></textarea>
+                    <textarea class="form-control" id="detail_nbr_beneficiaires" name="detail_nbr_beneficiaires" rows="2" maxlength="500"><%- project ? project.detail_nbr_beneficiaires : '' %></textarea>
                     <div class="form-text">
                       <span id="detail_nbr_beneficiaires_count">0</span>/500 caractères
                     </div>
@@ -379,7 +379,7 @@
                       <select class="form-select" id="statut_juridique_id" name="statut_juridique_id">
                         <option value="">Sélectionner...</option>
                         <% statuts.forEach(function(statut) { %>
-                        <option value="<%= statut.id %>" <%= project && project.statut_juridique_id == statut.id ? 'selected' : '' %>><%= statut.lib_statut %></option>
+                        <option value="<%= statut.id %>" <%= project && project.statut_juridique_id == statut.id ? 'selected' : '' %>><%- statut.lib_statut %></option>
                         <% }); %>
                       </select>
                     </div>
@@ -451,7 +451,7 @@
                       <select class="form-select" id="axe_id" name="axe_id" required data-validate="required">
                         <option value="">Sélectionner...</option>
                         <% axes.forEach(function(axe) { %>
-                        <option value="<%= axe.id %>" <%= project && project.axe_id == axe.id ? 'selected' : '' %>><%= axe.lib_axe %></option>
+                        <option value="<%= axe.id %>" <%= project && project.axe_id == axe.id ? 'selected' : '' %>><%- axe.lib_axe %></option>
                         <% }); %>
                       </select>
                     </div>
@@ -465,7 +465,7 @@
                       <select class="form-select" id="secteur_id" name="secteur_id" required data-validate="required">
                         <option value="">Sélectionner...</option>
                         <% secteurs.forEach(function(secteur) { %>
-                        <option value="<%= secteur.id %>" <%= project && project.secteur_id == secteur.id ? 'selected' : '' %>><%= secteur.lib_secteur %></option>
+                        <option value="<%= secteur.id %>" <%= project && project.secteur_id == secteur.id ? 'selected' : '' %>><%- secteur.lib_secteur %></option>
                         <% }); %>
                       </select>
                     </div>
