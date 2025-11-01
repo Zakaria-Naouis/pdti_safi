@@ -232,7 +232,7 @@ class Project {
       nbr_beneficiaires, detail_nbr_beneficiaires, duree_mois, echeancier,
       annee_debut, annee_fin, fc_disponibilite, fc_visibilite,
       statut_juridique_id, fc_assiette_assine, etude, etude_etat,
-      axe_id, secteur_id, moa_id, moe_id, gestionnaire_projet_id, objectif_id
+      axe_id, secteur_id, moa_id, moe_id, gestionnaire_projet_id, objectif_id, indicateurs
     } = projectData;
 
     const result = await db.query(
@@ -242,15 +242,17 @@ class Project {
         nbr_beneficiaires, detail_nbr_beneficiaires, duree_mois, echeancier,
         annee_debut, annee_fin, fc_disponibilite, fc_visibilite,
         statut_juridique_id, fc_assiette_assine, etude, etude_etat,
-        axe_id, secteur_id, moa_id, moe_id, gestionnaire_projet_id, objectif_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27) RETURNING *`,
+        axe_id, secteur_id, moa_id, moe_id, gestionnaire_projet_id, objectif_id, indicateurs
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
+      ) RETURNING *`,
       [
         num_projet, intitule, objectifs, composantes, superficie_lineaire,
         cout_total_mdh, detail_cout, nbr_emplois_directs, detail_nbr_emploi,
         nbr_beneficiaires, detail_nbr_beneficiaires, duree_mois, echeancier,
         annee_debut, annee_fin, fc_disponibilite, fc_visibilite,
         statut_juridique_id, fc_assiette_assine, etude, etude_etat,
-        axe_id, secteur_id, moa_id, moe_id, gestionnaire_projet_id, objectif_id
+        axe_id, secteur_id, moa_id, moe_id, gestionnaire_projet_id, objectif_id, indicateurs
       ]
     );
 
@@ -265,10 +267,10 @@ class Project {
       nbr_beneficiaires, detail_nbr_beneficiaires, duree_mois, echeancier,
       annee_debut, annee_fin, fc_disponibilite, fc_visibilite,
       statut_juridique_id, fc_assiette_assine, etude, etude_etat,
-      axe_id, secteur_id, moa_id, moe_id, gestionnaire_projet_id, objectif_id
+      axe_id, secteur_id, moa_id, moe_id, gestionnaire_projet_id, objectif_id, indicateurs
     } = projectData;
 
-    const result = await db.query(
+      const result = await db.query(
       `UPDATE projets SET
         num_projet = $1, intitule = $2, objectifs = $3, composantes = $4,
         superficie_lineaire = $5, cout_total_mdh = $6, detail_cout = $7,
@@ -278,15 +280,15 @@ class Project {
         fc_disponibilite = $16, fc_visibilite = $17, statut_juridique_id = $18,
         fc_assiette_assine = $19, etude = $20, etude_etat = $21,
         axe_id = $22, secteur_id = $23, moa_id = $24, moe_id = $25,
-        gestionnaire_projet_id = $26, objectif_id = $27
-      WHERE id = $28 RETURNING *`,
+        gestionnaire_projet_id = $26, objectif_id = $27, indicateurs = $28
+      WHERE id = $29 RETURNING *`,
       [
         num_projet, intitule, objectifs, composantes, superficie_lineaire,
         cout_total_mdh, detail_cout, nbr_emplois_directs, detail_nbr_emploi,
         nbr_beneficiaires, detail_nbr_beneficiaires, duree_mois, echeancier,
         annee_debut, annee_fin, fc_disponibilite, fc_visibilite,
         statut_juridique_id, fc_assiette_assine, etude, etude_etat,
-        axe_id, secteur_id, moa_id, moe_id, gestionnaire_projet_id, objectif_id, id
+        axe_id, secteur_id, moa_id, moe_id, gestionnaire_projet_id, objectif_id, indicateurs, id
       ]
     );
 

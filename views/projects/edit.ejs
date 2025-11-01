@@ -246,327 +246,337 @@
                   <div class="form-text">L'objectif sera filtré selon l'axe sélectionné</div>
                 </div>
               </div>
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label for="indicateurs" class="form-label">Indicateurs à améliorer</label>
+                  <textarea class="form-control" id="indicateurs" name="indicateurs" rows="3" maxlength="10000" data-validate="maxlength:10000"><%= project ? project.indicateurs : '' %></textarea>
+                  <div class="form-text">
+                    <span id="indicateurs_count">0</span>/10000 caractères
+                  </div>
+                </div>
+              </div>
           </div>
         </div>
-
-        <!-- Section: Caractéristiques techniques -->
-        <div class="form-section">
-          <h5 class="section-title">
-            <i class="fas fa-cogs me-2"></i>Caractéristiques techniques
-          </h5>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label for="superficie_lineaire" class="form-label">Superficie / Linéaire</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-ruler-combined"></i></span>
-                <input type="text" class="form-control" id="superficie_lineaire" name="superficie_lineaire" value="<%= project.superficie_lineaire || '' %>" maxlength="100">
-                <span class="input-group-text">m² / m</span>
-              </div>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label for="cout_total_mdh" class="form-label">Coût total (MDH)</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                <input type="number" step="0.01" class="form-control" id="cout_total_mdh" name="cout_total_mdh" value="<%= project.cout_total_mdh || '' %>" min="0" max="999999.99" data-validate="positive">
-              </div>
-              <div class="validation-message" id="cout_total_mdh_message"></div>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label for="duree_mois" class="form-label">Durée (mois)</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                <input type="number" class="form-control" id="duree_mois" name="duree_mois" value="<%= project.duree_mois || '' %>" min="1" max="1200" data-validate="positive">
-              </div>
-              <div class="validation-message" id="duree_mois_message"></div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="annee_debut" class="form-label">Année de début</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-calendar-plus"></i></span>
-                <input type="number" class="form-control" id="annee_debut" name="annee_debut" value="<%= project.annee_debut || '' %>" min="2020" max="2050" data-validate="year-range">
-              </div>
-              <div class="validation-message" id="annee_debut_message"></div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="annee_fin" class="form-label">Année de fin</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
-                <input type="number" class="form-control" id="annee_fin" name="annee_fin" value="<%= project.annee_fin || '' %>" min="2020" max="2050" data-validate="year-range,end-after-start">
-              </div>
-              <div class="validation-message" id="annee_fin_message"></div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12 mb-3">
-              <label for="echeancier" class="form-label">Échéancier</label>
-              <input type="text" class="form-control" id="echeancier" name="echeancier" value="<%= project.echeancier || '' %>" maxlength="100">
-            </div>
-          </div>
-          <div class="mb-3">
-            <label for="detail_cout" class="form-label">Détail du coût</label>
-            <textarea class="form-control" id="detail_cout" name="detail_cout" rows="2" maxlength="1000"><%= project.detail_cout || '' %></textarea>
-            <div class="form-text">
-              <span id="detail_cout_count">0</span>/1000 caractères
-            </div>
-          </div>
-        </div>
-
-        <!-- Section: Impact socio-économique -->
-        <div class="form-section">
-          <h5 class="section-title">
-            <i class="fas fa-chart-line me-2"></i>Impact socio-économique
-          </h5>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="nbr_emplois_directs" class="form-label">Nombre d'emplois directs</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-users"></i></span>
-                <input type="number" class="form-control" id="nbr_emplois_directs" name="nbr_emplois_directs" value="<%= project.nbr_emplois_directs || '' %>" min="0" max="999999" data-validate="positive-zero">
-              </div>
-              <div class="validation-message" id="nbr_emplois_directs_message"></div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="nbr_beneficiaires" class="form-label">Nombre de bénéficiaires</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-user-friends"></i></span>
-                <input type="number" class="form-control" id="nbr_beneficiaires" name="nbr_beneficiaires" value="<%= project.nbr_beneficiaires || '' %>" min="0" max="9999999" data-validate="positive-zero">
-              </div>
-              <div class="validation-message" id="nbr_beneficiaires_message"></div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="detail_nbr_emploi" class="form-label">Détail des emplois</label>
-              <textarea class="form-control" id="detail_nbr_emploi" name="detail_nbr_emploi" rows="2" maxlength="500"><%= project.detail_nbr_emploi || '' %></textarea>
-              <div class="form-text">
-                <span id="detail_nbr_emploi_count">0</span>/500 caractères
-              </div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="detail_nbr_beneficiaires" class="form-label">Détail des bénéficiaires</label>
-              <textarea class="form-control" id="detail_nbr_beneficiaires" name="detail_nbr_beneficiaires" rows="2" maxlength="500"><%= project.detail_nbr_beneficiaires || '' %></textarea>
-              <div class="form-text">
-                <span id="detail_nbr_beneficiaires_count">0</span>/500 caractères
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section: Statut juridique et foncier -->
-        <div class="form-section">
-          <h5 class="section-title">
-            <i class="fas fa-balance-scale me-2"></i>Statut juridique et foncier
-          </h5>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="statut_juridique_id" class="form-label">Statut juridique</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-gavel"></i></span>
-                <select class="form-select" id="statut_juridique_id" name="statut_juridique_id">
-                  <option value="">Sélectionner...</option>
-                  <% statuts.forEach(function(statut) { %>
-                  <option value="<%= statut.id %>" <%= project.statut_juridique_id == statut.id ? 'selected' : '' %>><%= statut.lib_statut %></option>
-                  <% }); %>
-                </select>
-              </div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="etude_etat" class="form-label">État de l'étude</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-clipboard-check"></i></span>
-                <select class="form-select" id="etude_etat" name="etude_etat" <%= project.etude ? '' : 'disabled' %>>
-                  <option value="">Sélectionner...</option>
-                  <option value="APS" <%= project.etude_etat == 'APS' ? 'selected' : '' %>>APS</option>
-                  <option value="APD" <%= project.etude_etat == 'APD' ? 'selected' : '' %>>APD</option>
-                  <option value="DE" <%= project.etude_etat == 'DE' ? 'selected' : '' %>>DE</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-3 mb-3">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="fc_disponibilite" name="fc_disponibilite" <%= project.fc_disponibilite ? 'checked' : '' %>>
-                <label class="form-check-label" for="fc_disponibilite">
-                  Foncier disponible
-                </label>
-              </div>
-            </div>
-            <div class="col-md-3 mb-3">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="fc_visibilite" name="fc_visibilite" <%= project.fc_visibilite ? 'checked' : '' %>>
-                <label class="form-check-label" for="fc_visibilite">
-                  Foncier visible
-                </label>
-              </div>
-            </div>
-            <div class="col-md-3 mb-3">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="fc_assiette_assine" name="fc_assiette_assine" <%= project.fc_assiette_assine ? 'checked' : '' %>>
-                <label class="form-check-label" for="fc_assiette_assine">
-                  Assiette assinée
-                </label>
-              </div>
-            </div>
-            <div class="col-md-3 mb-3">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="etude" name="etude" <%= project.etude ? 'checked' : '' %>>
-                <label class="form-check-label" for="etude">
-                  Étude réalisée
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section: Localisation -->
-        <div class="form-section">
-          <h5 class="section-title">
-            <i class="fas fa-map-marker-alt me-2"></i>Localisation
-          </h5>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="axe_id" class="form-label required-field">Axe</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-sitemap"></i></span>
-                <select class="form-select" id="axe_id" name="axe_id" required data-validate="required">
-                  <option value="">Sélectionner...</option>
-                  <% axes.forEach(function(axe) { %>
-                  <option value="<%= axe.id %>" <%= project.axe_id == axe.id ? 'selected' : '' %>><%= axe.lib_axe %></option>
-                  <% }); %>
-                </select>
-              </div>
-              <div class="validation-message" id="axe_id_message"></div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="secteur_id" class="form-label required-field">Secteur</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-stream"></i></span>
-                <select class="form-select" id="secteur_id" name="secteur_id" required data-validate="required">
-                  <option value="">Sélectionner...</option>
-                  <% secteurs.forEach(function(secteur) { %>
-                  <option value="<%= secteur.id %>" <%= project.secteur_id == secteur.id ? 'selected' : '' %>><%= secteur.lib_secteur %></option>
-                  <% }); %>
-                </select>
-              </div>
-              <div class="validation-message" id="secteur_id_message"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section: Communes concernées -->
-        <div class="form-section">
-          <h5 class="section-title">
-            <i class="fas fa-city me-2"></i>Communes concernées
-          </h5>
-          <div class="row" id="communes-container">
-            <% communes.forEach(function(commune) { %>
-            <div class="col-md-4 mb-2">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="communes" value="<%= commune.id %>" id="commune_<%= commune.id %>" <% if (projectCommunes && projectCommunes.some(pc => pc.id == commune.id)) { %>checked<% } %>>
-                <label class="form-check-label" for="commune_<%= commune.id %>">
-                  <%= commune.nom_fr %>
-                </label>
-              </div>
-            </div>
-            <% }); %>
-          </div>
-        </div>
-        <!-- Section: Partenaires -->
-        <div class="form-section">
-          <h5 class="section-title">
-            <i class="fas fa-handshake me-2"></i>Partenaires
-          </h5>
-          <div class="row" id="partenaires-container">
-            <% if (typeof partenaires !== 'undefined' && partenaires.length > 0) { %>
-            <% partenaires.forEach(function(partenaire) { %>
-            <div class="col-md-4 mb-2">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="partenaires" value="<%= partenaire.id %>" id="partenaire_<%= partenaire.id %>" <% if (projectPartenaires && projectPartenaires.some(pp => pp.id == partenaire.id)) { %>checked<% } %>>
-                <label class="form-check-label" for="partenaire_<%= partenaire.id %>">
-                  <%= partenaire.nom_partenaire %>
-                </label>
-              </div>
-            </div>
-            <% }); %>
-            <% } else { %>
-            <div class="col-12">
-              <p class="text-muted"><i class="fas fa-info-circle me-2"></i>Aucun partenaire disponible</p>
-            </div>
-            <% } %>
-          </div>
-        </div>
-
-        <!-- Section: Acteurs -->
-        <div class="form-section">
-          <h5 class="section-title">
-            <i class="fas fa-users-cog me-2"></i>Acteurs
-          </h5>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label for="moa_id" class="form-label">Maîtrise d'ouvrage (MOA)</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-building"></i></span>
-                <select class="form-select" id="moa_id" name="moa_id">
-                  <option value="">Sélectionner...</option>
-                  <% moas.forEach(function(moa) { %>
-                  <option value="<%= moa.id %>" <%= project.moa_id == moa.id ? 'selected' : '' %>><%= moa.nom_moa %></option>
-                  <% }); %>
-                </select>
-              </div>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label for="moe_id" class="form-label">Maîtrise d'œuvre (MOE)</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-hard-hat"></i></span>
-                <select class="form-select" id="moe_id" name="moe_id">
-                  <option value="">Sélectionner...</option>
-                  <% moes.forEach(function(moe) { %>
-                  <option value="<%= moe.id %>" <%= project.moe_id == moe.id ? 'selected' : '' %>><%= moe.nom_moe %></option>
-                  <% }); %>
-                </select>
-              </div>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label for="gestionnaire_projet_id" class="form-label">Gestionnaire de projet</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
-                <select class="form-select" id="gestionnaire_projet_id" name="gestionnaire_projet_id">
-                  <option value="">Sélectionner...</option>
-                  <% gestionnaires.forEach(function(gestionnaire) { %>
-                  <option value="<%= gestionnaire.id %>" <%= project.gestionnaire_projet_id == gestionnaire.id ? 'selected' : '' %>><%= gestionnaire.nom_gestionnaire %></option>
-                  <% }); %>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Boutons d'action -->
-        <div class="d-flex justify-content-between mt-4">
-          <div>
-            <a href="<%= backUrl %>" class="btn btn-secondary">
-              <i class="fas fa-arrow-left me-1"></i> Retour
-            </a>
-          </div>
-          <div>
-            <button type="button" class="btn btn-outline-primary me-2" id="validate-btn">
-              <i class="fas fa-check-circle me-1"></i> Valider
-            </button>
-            <button type="submit" class="btn btn-primary" id="submit-btn">
-              <i class="fas fa-save me-1"></i>
-              <span class="btn-text">Enregistrer les modifications</span>
-              <div class="spinner-border spinner-border-sm d-none" role="status">
-                <span class="visually-hidden">Chargement...</span>
-              </div>
-            </button>
-          </div>
-        </div>
-        </form>
       </div>
+
+      <!-- Section: Caractéristiques techniques -->
+      <div class="form-section">
+        <h5 class="section-title">
+          <i class="fas fa-cogs me-2"></i>Caractéristiques techniques
+        </h5>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="superficie_lineaire" class="form-label">Superficie / Linéaire</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-ruler-combined"></i></span>
+              <input type="text" class="form-control" id="superficie_lineaire" name="superficie_lineaire" value="<%= project.superficie_lineaire || '' %>" maxlength="100">
+              <span class="input-group-text">m² / m</span>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="cout_total_mdh" class="form-label">Coût total (MDH)</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+              <input type="number" step="0.01" class="form-control" id="cout_total_mdh" name="cout_total_mdh" value="<%= project.cout_total_mdh || '' %>" min="0" max="999999.99" data-validate="positive">
+            </div>
+            <div class="validation-message" id="cout_total_mdh_message"></div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="duree_mois" class="form-label">Durée (mois)</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+              <input type="number" class="form-control" id="duree_mois" name="duree_mois" value="<%= project.duree_mois || '' %>" min="1" max="1200" data-validate="positive">
+            </div>
+            <div class="validation-message" id="duree_mois_message"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="annee_debut" class="form-label">Année de début</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-calendar-plus"></i></span>
+              <input type="number" class="form-control" id="annee_debut" name="annee_debut" value="<%= project.annee_debut || '' %>" min="2020" max="2050" data-validate="year-range">
+            </div>
+            <div class="validation-message" id="annee_debut_message"></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="annee_fin" class="form-label">Année de fin</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
+              <input type="number" class="form-control" id="annee_fin" name="annee_fin" value="<%= project.annee_fin || '' %>" min="2020" max="2050" data-validate="year-range,end-after-start">
+            </div>
+            <div class="validation-message" id="annee_fin_message"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label for="echeancier" class="form-label">Échéancier</label>
+            <input type="text" class="form-control" id="echeancier" name="echeancier" value="<%= project.echeancier || '' %>" maxlength="100">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="detail_cout" class="form-label">Détail du coût</label>
+          <textarea class="form-control" id="detail_cout" name="detail_cout" rows="2" maxlength="1000"><%= project.detail_cout || '' %></textarea>
+          <div class="form-text">
+            <span id="detail_cout_count">0</span>/1000 caractères
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Impact socio-économique -->
+      <div class="form-section">
+        <h5 class="section-title">
+          <i class="fas fa-chart-line me-2"></i>Impact socio-économique
+        </h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="nbr_emplois_directs" class="form-label">Nombre d'emplois directs</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-users"></i></span>
+              <input type="number" class="form-control" id="nbr_emplois_directs" name="nbr_emplois_directs" value="<%= project.nbr_emplois_directs || '' %>" min="0" max="999999" data-validate="positive-zero">
+            </div>
+            <div class="validation-message" id="nbr_emplois_directs_message"></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="nbr_beneficiaires" class="form-label">Nombre de bénéficiaires</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-user-friends"></i></span>
+              <input type="number" class="form-control" id="nbr_beneficiaires" name="nbr_beneficiaires" value="<%= project.nbr_beneficiaires || '' %>" min="0" max="9999999" data-validate="positive-zero">
+            </div>
+            <div class="validation-message" id="nbr_beneficiaires_message"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="detail_nbr_emploi" class="form-label">Détail des emplois</label>
+            <textarea class="form-control" id="detail_nbr_emploi" name="detail_nbr_emploi" rows="2" maxlength="500"><%= project.detail_nbr_emploi || '' %></textarea>
+            <div class="form-text">
+              <span id="detail_nbr_emploi_count">0</span>/500 caractères
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="detail_nbr_beneficiaires" class="form-label">Détail des bénéficiaires</label>
+            <textarea class="form-control" id="detail_nbr_beneficiaires" name="detail_nbr_beneficiaires" rows="2" maxlength="500"><%= project.detail_nbr_beneficiaires || '' %></textarea>
+            <div class="form-text">
+              <span id="detail_nbr_beneficiaires_count">0</span>/500 caractères
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Statut juridique et foncier -->
+      <div class="form-section">
+        <h5 class="section-title">
+          <i class="fas fa-balance-scale me-2"></i>Statut juridique et foncier
+        </h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="statut_juridique_id" class="form-label">Statut juridique</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-gavel"></i></span>
+              <select class="form-select" id="statut_juridique_id" name="statut_juridique_id">
+                <option value="">Sélectionner...</option>
+                <% statuts.forEach(function(statut) { %>
+                <option value="<%= statut.id %>" <%= project.statut_juridique_id == statut.id ? 'selected' : '' %>><%= statut.lib_statut %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="etude_etat" class="form-label">État de l'étude</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-clipboard-check"></i></span>
+              <select class="form-select" id="etude_etat" name="etude_etat" <%= project.etude ? '' : 'disabled' %>>
+                <option value="">Sélectionner...</option>
+                <option value="APS" <%= project.etude_etat == 'APS' ? 'selected' : '' %>>APS</option>
+                <option value="APD" <%= project.etude_etat == 'APD' ? 'selected' : '' %>>APD</option>
+                <option value="DE" <%= project.etude_etat == 'DE' ? 'selected' : '' %>>DE</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="fc_disponibilite" name="fc_disponibilite" <%= project.fc_disponibilite ? 'checked' : '' %>>
+              <label class="form-check-label" for="fc_disponibilite">
+                Foncier disponible
+              </label>
+            </div>
+          </div>
+          <div class="col-md-3 mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="fc_visibilite" name="fc_visibilite" <%= project.fc_visibilite ? 'checked' : '' %>>
+              <label class="form-check-label" for="fc_visibilite">
+                Foncier visible
+              </label>
+            </div>
+          </div>
+          <div class="col-md-3 mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="fc_assiette_assine" name="fc_assiette_assine" <%= project.fc_assiette_assine ? 'checked' : '' %>>
+              <label class="form-check-label" for="fc_assiette_assine">
+                Assiette assinée
+              </label>
+            </div>
+          </div>
+          <div class="col-md-3 mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="etude" name="etude" <%= project.etude ? 'checked' : '' %>>
+              <label class="form-check-label" for="etude">
+                Étude réalisée
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Localisation -->
+      <div class="form-section">
+        <h5 class="section-title">
+          <i class="fas fa-map-marker-alt me-2"></i>Localisation
+        </h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="axe_id" class="form-label required-field">Axe</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-sitemap"></i></span>
+              <select class="form-select" id="axe_id" name="axe_id" required data-validate="required">
+                <option value="">Sélectionner...</option>
+                <% axes.forEach(function(axe) { %>
+                <option value="<%= axe.id %>" <%= project.axe_id == axe.id ? 'selected' : '' %>><%= axe.lib_axe %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="validation-message" id="axe_id_message"></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="secteur_id" class="form-label required-field">Secteur</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-stream"></i></span>
+              <select class="form-select" id="secteur_id" name="secteur_id" required data-validate="required">
+                <option value="">Sélectionner...</option>
+                <% secteurs.forEach(function(secteur) { %>
+                <option value="<%= secteur.id %>" <%= project.secteur_id == secteur.id ? 'selected' : '' %>><%= secteur.lib_secteur %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="validation-message" id="secteur_id_message"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Communes concernées -->
+      <div class="form-section">
+        <h5 class="section-title">
+          <i class="fas fa-city me-2"></i>Communes concernées
+        </h5>
+        <div class="row" id="communes-container">
+          <% communes.forEach(function(commune) { %>
+          <div class="col-md-4 mb-2">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="communes" value="<%= commune.id %>" id="commune_<%= commune.id %>" <% if (projectCommunes && projectCommunes.some(pc => pc.id == commune.id)) { %>checked<% } %>>
+              <label class="form-check-label" for="commune_<%= commune.id %>">
+                <%= commune.nom_fr %>
+              </label>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+      </div>
+      <!-- Section: Partenaires -->
+      <div class="form-section">
+        <h5 class="section-title">
+          <i class="fas fa-handshake me-2"></i>Partenaires
+        </h5>
+        <div class="row" id="partenaires-container">
+          <% if (typeof partenaires !== 'undefined' && partenaires.length > 0) { %>
+          <% partenaires.forEach(function(partenaire) { %>
+          <div class="col-md-4 mb-2">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="partenaires" value="<%= partenaire.id %>" id="partenaire_<%= partenaire.id %>" <% if (projectPartenaires && projectPartenaires.some(pp => pp.id == partenaire.id)) { %>checked<% } %>>
+              <label class="form-check-label" for="partenaire_<%= partenaire.id %>">
+                <%= partenaire.nom_partenaire %>
+              </label>
+            </div>
+          </div>
+          <% }); %>
+          <% } else { %>
+          <div class="col-12">
+            <p class="text-muted"><i class="fas fa-info-circle me-2"></i>Aucun partenaire disponible</p>
+          </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Section: Acteurs -->
+      <div class="form-section">
+        <h5 class="section-title">
+          <i class="fas fa-users-cog me-2"></i>Acteurs
+        </h5>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="moa_id" class="form-label">Maîtrise d'ouvrage (MOA)</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-building"></i></span>
+              <select class="form-select" id="moa_id" name="moa_id">
+                <option value="">Sélectionner...</option>
+                <% moas.forEach(function(moa) { %>
+                <option value="<%= moa.id %>" <%= project.moa_id == moa.id ? 'selected' : '' %>><%= moa.nom_moa %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="moe_id" class="form-label">Maîtrise d'œuvre (MOE)</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-hard-hat"></i></span>
+              <select class="form-select" id="moe_id" name="moe_id">
+                <option value="">Sélectionner...</option>
+                <% moes.forEach(function(moe) { %>
+                <option value="<%= moe.id %>" <%= project.moe_id == moe.id ? 'selected' : '' %>><%= moe.nom_moe %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="gestionnaire_projet_id" class="form-label">Gestionnaire de projet</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+              <select class="form-select" id="gestionnaire_projet_id" name="gestionnaire_projet_id">
+                <option value="">Sélectionner...</option>
+                <% gestionnaires.forEach(function(gestionnaire) { %>
+                <option value="<%= gestionnaire.id %>" <%= project.gestionnaire_projet_id == gestionnaire.id ? 'selected' : '' %>><%= gestionnaire.nom_gestionnaire %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Boutons d'action -->
+      <div class="d-flex justify-content-between mt-4">
+        <div>
+          <a href="<%= backUrl %>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Retour
+          </a>
+        </div>
+        <div>
+          <button type="button" class="btn btn-outline-primary me-2" id="validate-btn">
+            <i class="fas fa-check-circle me-1"></i> Valider
+          </button>
+          <button type="submit" class="btn btn-primary" id="submit-btn">
+            <i class="fas fa-save me-1"></i>
+            <span class="btn-text">Enregistrer les modifications</span>
+            <div class="spinner-border spinner-border-sm d-none" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </button>
+        </div>
+      </div>
+      </form>
     </div>
+  </div>
   </div>
   </div>
   </div>
@@ -989,7 +999,7 @@
 
       // Compteurs de caractères
       function initCharCounters() {
-        const fieldsWithCounters = ['intitule', 'objectifs', 'composantes', 'detail_cout', 'detail_nbr_emploi', 'detail_nbr_beneficiaires'];
+        const fieldsWithCounters = ['intitule', 'indicateurs', 'objectifs', 'composantes', 'detail_cout', 'detail_nbr_emploi', 'detail_nbr_beneficiaires'];
 
         fieldsWithCounters.forEach(fieldId => {
           const field = document.getElementById(fieldId);

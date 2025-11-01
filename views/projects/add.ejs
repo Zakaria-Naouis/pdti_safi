@@ -241,6 +241,15 @@
                     <div class="form-text">L'objectif sera filtré selon l'axe sélectionné</div>
                   </div>
                 </div>
+                <div class="row">
+                  <div class="col-md-12 mb-3">
+                    <label for="indicateurs" class="form-label">Indicateurs à améliorer</label>
+                    <textarea class="form-control" id="indicateurs" name="indicateurs" rows="3" maxlength="10000" data-validate="maxlength:10000"><%= project ? project.indicateurs : '' %></textarea>
+                    <div class="form-text">
+                      <span id="indicateurs_count">0</span>/10000 caractères
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Section: Caractéristiques techniques -->
@@ -873,7 +882,7 @@
 
     // Compteurs de caractères
     function initCharCounters() {
-      const fieldsWithCounters = ['intitule', 'objectifs', 'composantes', 'detail_cout', 'detail_nbr_emploi', 'detail_nbr_beneficiaires'];
+      const fieldsWithCounters = ['intitule', 'indicateurs', 'objectifs', 'composantes', 'detail_cout', 'detail_nbr_emploi', 'detail_nbr_beneficiaires'];
 
       fieldsWithCounters.forEach(fieldId => {
         const field = document.getElementById(fieldId);

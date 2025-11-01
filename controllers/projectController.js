@@ -34,6 +34,12 @@ const projectValidationRules = () => {
       .isLength({ max: 10000 })
       .withMessage('Les composantes ne peuvent pas dépasser 1000 caractères')
       .trim(),
+      
+body('indicateurs')
+      .optional({ nullable: true, checkFalsy: true })
+      .isLength({ max: 10000 })
+      .withMessage('Les indicateurs ne peuvent pas dépasser 10000 caractères')
+      .trim(),
 
     // Validation des champs numériques
     body('cout_total_mdh')
