@@ -60,8 +60,38 @@ module.exports.isAuthenticated = async (req, res, next) => {
   }
 };
 
-// Middleware pour passer l'utilisateur à toutes les vues
-module.exports.setUserInLocals = (req, res, next) => {
-  res.locals.user = req.user || null;
+// ============================================
+// CORRECTION: Middleware amélioré pour passer l'utilisateur à toutes les vues
+// ============================================
+module.exports.setUserInLocals = async (req, res, next) => {
+  // Si req.user existe déjà (défini par isAuthenticated), l'utiliser
+  if (req.user) {
+    res.locals.user = req.user;
+    return next();
+  }
+
+  // Sinon, essayer de récupérer l'utilisateur via le cookie JWT
+  const token = req.cookies.jwt;
+  
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id);
+      
+      if (user) {
+        req.user = user;
+        res.locals.user = user;
+      } else {
+        res.locals.user = null;
+      }
+    } catch (error) {
+      // Token invalide ou expiré, on ne fait rien (l'utilisateur sera null)
+      res.locals.user = null;
+    }
+  } else {
+    // Pas de token, l'utilisateur n'est pas connecté
+    res.locals.user = null;
+  }
+  
   next();
 };

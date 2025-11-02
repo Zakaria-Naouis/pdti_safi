@@ -2,26 +2,12 @@
 const express = require('express');
 const router = express.Router();
 const exportController = require('../controllers/exportController');
-const auth = require('../middleware/auth');
+const { isAuthenticated } = require('../middleware/auth');
 
-// Route pour exporter les projets par axe avec filtre
-router.get('/axes/:filter', 
-  auth.isAuthenticated,
-  auth.setUserInLocals,
-  exportController.exportProjectsByAxes
-);
+router.use(isAuthenticated);
 
-// Autres routes d'exportation existantes
-router.get('/secteurs', 
-  auth.isAuthenticated,
-  auth.setUserInLocals,
-  exportController.exportProjectsBySectors
-);
+router.get('/canvas-global', exportController.exportCanvasGlobal);
 
-router.get('/communes', 
-  auth.isAuthenticated,
-  auth.setUserInLocals,
-  exportController.exportProjectsByCommunes
-);
+router.get('/canvas-2026', exportController.exportCanvas2026);
 
 module.exports = router;
