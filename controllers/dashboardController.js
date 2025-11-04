@@ -149,7 +149,7 @@ exports.getPaginatedProjectsByPole = async (poleId, page = 1, limit = 5) => {
       JOIN secteurs s ON p.secteur_id = s.id
       JOIN poles po ON a.pole_id = po.id
       WHERE po.id = $1
-      ORDER BY p.num_projet
+      ORDER BY p.num_projet, p.id
       LIMIT $2 OFFSET $3
     `;
    
@@ -628,7 +628,7 @@ exports.getAdminDashboard = async (req, res) => {
       JOIN axes a ON p.axe_id = a.id
       JOIN secteurs s ON p.secteur_id = s.id
       JOIN poles po ON a.pole_id = po.id
-      ORDER BY p.num_projet DESC
+      ORDER BY p.num_projet, p.id DESC
       LIMIT $1 OFFSET $2
     `;
     
@@ -846,7 +846,7 @@ exports.getProjectsByAxe = async (req, res) => {
       JOIN secteurs s ON p.secteur_id = s.id
       JOIN poles po ON a.pole_id = po.id
       WHERE p.axe_id = $1
-      ORDER BY p.num_projet ASC
+      ORDER BY p.num_projet, p.id ASC
     `, [axeId]);
 
     res.json({

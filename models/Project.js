@@ -39,7 +39,7 @@ class Project {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY p.num_projet';
+    query += ' ORDER BY p.num_projet, p.id';
 
     const result = await db.query(query, params);
     return result.rows;
@@ -378,7 +378,7 @@ class Project {
         JOIN poles po ON a.pole_id = po.id
         JOIN objectifs o ON p.objectif_id = o.id
         WHERE p.objectif_id = $1
-        ORDER BY p.num_projet ASC
+        ORDER BY p.num_projet, p.id ASC
       `, [objectifId]);
 
       return result.rows;
