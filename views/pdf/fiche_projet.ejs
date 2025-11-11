@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8" />
+  <style>
+    /* === Vos styles natifs pour garder la même charte === */
+    <%- inlineStyleCss || ''%>
+
+    /* === Cadre d'impression A4 === */
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+    }
+
+    .fiche {
+      width: 100%;
+      min-height: calc(297mm - 20mm);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      row-gap: 6px;
+      page-break-after: always;
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .title {
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: #334155;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
+    }
+
+    .section {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 6px;
+    }
+
+    .section h4 {
+      margin: 0 0 4px 0;
+      font-size: 12.5px;
+      color: #0f172a;
+    }
+
+    .text {
+      font-size: 12.5px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Hauteurs max pour tenir sur 1 page */
+    .s-objectifs .text {
+      max-height: 80mm;
+    }
+
+    .s-composantes .text {
+      max-height: 45mm;
+    }
+
+    /* Bandeau couleur par axe/pôle (on met une bordure verticale) */
+    .fiche.themable {
+      border-left: 6px solid var(--theme-color, #666);
+    }
+
+    /* Les éléments marqués data-autofit seront “rétrécis” si ça déborde */
+    [data-autofit] {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <% 
+    const list = Array.isArray(fiches) ? fiches : []; 
+    const get = (o, ...keys) => {
+      for (const k of keys) {
+        if (o && o[k] !== undefined && o[k] !== null && o[k] !== '') return o[k];
+      }
+      return '';
+    };
+  %>
+
+  <% if (list.length === 0) { %>
+  <!-- Génère quand même 1 page "vide" propre -->
+  <section class="fiche themable" style="--theme-color:#595959;">
+    <div class="header">
+      <div>
+        <div class="title">FICHE PROJET</div>
+        <div style="font-size:12px;margin-top:2px;">Axe : (aucun projet trouvé)</div>
+        <div style="font-size:12px;">Secteur : —</div>
+      </div>
+    </div>
+    <div class="section s-objectifs">
+      <h4>Objectifs du projet (argumentaires)</h4>
+      <div class="text">Aucune donnée pour cet axe.</div>
+    </div>
+  </section>
+  <% } else { %>
+
+  <% list.forEach((f, idx) => { 
+      // Couleur par axe (on utilise axe_libelle pour rester robuste)
+      const axe = (get(f, 'axe_libelle', 'Axe') || '').toString().toLowerCase();
+      let themeColor = '#595959'; // défaut
+      if (axe.includes('invest')) themeColor = '#BF9000';
+      else if (axe.includes('éduc') || axe.includes('educ')) themeColor = '#DD6615';
+      else if (axe.includes('sant')) themeColor = '#385623';
+      else if (axe.includes('eau') || axe.includes('ressources')) themeColor = '#002060';
+  %>
+  <section class="fiche themable" style="--theme-color:<%= themeColor %>;">
+    <div class="header">
+      <div>
+        <div class="title">FICHE PROJET</div>
+        <div style="font-size:12px;margin-top:2px;">Axe : <%= get(f, 'axe_libelle', 'Axe') %></div>
+        <div style="font-size:12px;">Secteur : <%= get(f, 'secteur_libelle', 'Secteur') %></div>
+      </div>
+      <div class="meta">
+        <div><strong>Intitulé du projet :</strong> <%= get(f, 'intitule', 'Intitulé du Projet') %></div>
+        <div><strong>Commune :</strong> <%= get(f, 'commune', 'Commune') %></div>
+      </div>
+    </div>
+
+    <div class="section s-objectifs">
+      <h4>Objectifs du projet (argumentaires)</h4>
+      <div class="text" data-autofit data-maxh="80mm"><%= get(f, 'objectifs', 'Objectifs du projet (argumentaires)') %></div>
+    </div>
+
+    <div class="section s-composantes">
+      <h4>Composantes du projet</h4>
+      <div class="text" data-autofit data-maxh="45mm"><%= get(f, 'composantes', 'Composantes du projet') %></div>
+    </div>
+
+    <div class="section">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px 16px; font-size:12px;">
+        <div style="display:grid; grid-template-columns: 42% 58%; gap:4px;">
+          <span>Consistance :</span><span><%= get(f, 'superficie_lineaire', 'Consistance du projet (superficie, linéaire,…)') %></span>
+          <span>Coût (MDH) :</span><span><%= get(f, 'cout_total_mdh', 'Coût du projet (MDHs)') %></span>
+          <span>Emplois directs :</span><span><%= get(f, 'nbr_emplois_directs', "Nombre d'emplois direct") %></span>
+          <span>Bénéficiaires :</span><span><%= get(f, 'nbr_beneficiaires', 'Nombres des bénéficiaires par catégories cibles') %></span>
+          <span>Durée (mois) :</span><span><%= get(f, 'duree_mois', 'Durée du projet (En mois)') %></span>
+          <span>Échéancier :</span><span><%= get(f, 'echeancier', 'Echéancier') %></span>
+        </div>
+        <div style="display:grid; grid-template-columns: 42% 58%; gap:4px;">
+          <span>Maître d’ouvrage :</span><span><%= get(f, 'moa_nom', "Maître d'ouvrage") %></span>
+          <span>MO délégué :</span><span><%= get(f, 'moe_nom', "Maître d'ouvrage délégué") %></span>
+          <span>Foncier disponible :</span><span><%= get(f, 'fc_disponibilite', 'Disponibilité Foncier') %></span>
+          <span>Visibilité mobilisation :</span><span><%= get(f, 'fc_visibilite', 'Si non, visibilité sur sa mobilisation sans contrainte (oui/no') %></span>
+          <span>Statut juridique :</span><span><%= get(f, 'statut_juridique_libelle', 'Statut juridique') %></span>
+          <span>Assiette assainie :</span><span><%= get(f, 'fc_assiette_assine', 'Assiette assainie') %></span>
+          <span>Étude disponible :</span><span><%= get(f, 'etude', 'Etude Disponible') %></span>
+          <span>État étude :</span><span><%= get(f, 'etude_etat', "Si Oui état d'avancement") %></span>
+        </div>
+      </div>
+    </div>
+  </section>
+  <% }) %>
+  <% } %>
+
+  <script>
+    (function() {
+      const shrink = (el, min = 10) => {
+        const maxH = el.dataset.maxh ? parseFloat(el.dataset.maxh) : el.clientHeight;
+        let fs = parseFloat(getComputedStyle(el).fontSize);
+        while (el.scrollHeight > maxH && fs > min) {
+          fs -= 0.5;
+          el.style.fontSize = fs + 'px';
+          el.style.lineHeight = '1.25';
+        }
+        while (el.scrollHeight > maxH && el.textContent.length > 0) {
+          el.textContent = el.textContent.slice(0, -8) + '…';
+        }
+      };
+      document.querySelectorAll('[data-autofit]').forEach(shrink);
+    })();
+  </script>
+</body>
+
+
+</html>

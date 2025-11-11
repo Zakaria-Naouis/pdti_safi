@@ -1,0 +1,424 @@
+<!-- views/fiches-projets-template.ejs -->
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FICHES PROJETS – Province de Safi</title>
+  <style>
+    :root {
+      --fill: <%=(color && color.light) || '#F3F7EF'%>;
+      --accent: <%=(color && color.main) || '#275317'%>;
+      --ink: #000;
+      --grid: <%=(color && color.grid) || '#C9BA8D'%>;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      color: var(--ink);
+      font: 14px/1.35 "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    .page.compact {
+      width: 210mm;
+      height: 297mm;
+      max-width: 794px;
+      margin: 0 auto;
+      padding: 8px 16px;
+      background: #fff;
+      page-break-after: always;
+      position: relative;
+    }
+
+    .page.adaptive {
+      width: 210mm;
+      min-height: 270mm;
+      max-width: 794px;
+      margin: 0 auto;
+      padding: 20px 24px 16px;
+      background: #fff;
+      page-break-after: always;
+      position: relative;
+    }
+
+    .page:last-child {
+      page-break-after: auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .header-left {
+      font-weight: 700;
+      color: #000;
+      font-size: 15px;
+    }
+
+    .header-right {
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 14px;
+      background: var(--fill);
+      padding: 4px 12px;
+      border-radius: 4px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      text-align: center;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--accent);
+    }
+
+    .compact h1 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .compact .header {
+      margin-bottom: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    td {
+      border: 1px solid var(--grid);
+      padding: 8px 10px;
+      vertical-align: top;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      text-align: justify;
+      text-justify: inter-word;
+    }
+
+    .compact td {
+      padding: 4px 6px;
+      font-size: 11.5px;
+      line-height: 1.2;
+    }
+
+    .adaptive td {
+      padding: 8px 10px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .label,
+    .section-title,
+    .label2 {
+      background: var(--fill);
+    }
+
+    .label {
+      font-weight: 600;
+    }
+
+    .section-title {
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .label2 {
+      font-weight: 600;
+    }
+
+    col.col1 {
+      width: 22%;
+    }
+
+    col.col2 {
+      width: 30%;
+    }
+
+    col.col3 {
+      width: 22%;
+    }
+
+    col.col4 {
+      width: 26%;
+    }
+
+    .bullet-list {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.35;
+    }
+
+    .compact .bullet-list {
+      line-height: 1.15;
+      padding-left: 12px;
+    }
+
+    .bullet-list li {
+      margin: 4px 0;
+    }
+
+    .compact .bullet-list li {
+      margin: 1px 0;
+    }
+
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .page {
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        page-break-after: always;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <%
+    function sanitizeText(txt) {
+      if (txt === null || txt === undefined) return '–';
+      let t = String(txt);
+      t = t.replace(/&amp;/g, '&')
+           .replace(/&lt;/g, '<')
+           .replace(/&gt;/g, '>')
+           .replace(/&quot;/g, '"')
+           .replace(/&#39;/g, "'")
+           .replace(/&apos;/g, "'")
+           .replace(/&nbsp;/g, ' ')
+           .replace(/&ndash;/g, '–')
+           .replace(/&mdash;/g, '—')
+           .replace(/&lsquo;/g, '\u2018')
+           .replace(/&rsquo;/g, '\u2019')
+           .replace(/&ldquo;/g, '\u201C')
+           .replace(/&rdquo;/g, '\u201D')
+           .replace(/&hellip;/g, '…');
+      return t;
+    }
+
+    function getListParts(raw) {
+      const cleaned = sanitizeText(raw);
+      if (!cleaned || cleaned === '–') return [];
+      const normalized = cleaned.replace(/^\s*([*▪•-]+)\s*/gm, '').trim();
+
+      let parts;
+      if (/\r?\n/.test(normalized)) {
+        parts = normalized.split(/\r?\n+/);
+      } else if (/[;▪•]/.test(normalized)) {
+        parts = normalized.split(/[;▪•]+/);
+      } else {
+        parts = [normalized];
+      }
+      return parts.map(s => s.trim()).filter(Boolean);
+    }
+
+    function calculateContentDensity(projet) {
+      let score = 0;
+      
+      const titre = sanitizeText(projet["Intitulé du Projet"] || '');
+      score += Math.min(titre.length / 10, 15);
+      
+      const objectifs = getListParts(projet["Objectifs du projet (argumentaires)"]);
+      score += objectifs.length * 3;
+      score += objectifs.reduce((sum, obj) => sum + obj.length / 20, 0);
+      
+      const composantes = getListParts(projet["Composantes du projet"]);
+      score += composantes.length * 3;
+      score += composantes.reduce((sum, comp) => sum + comp.length / 20, 0);
+      
+      const consistance = getListParts(projet["Consistance du projet (superficie, linéaire,…)"]);
+      score += consistance.length * 2;
+      score += consistance.reduce((sum, cons) => sum + cons.length / 20, 0);
+      
+      const moa = sanitizeText(projet["Maître d'ouvrage"] || "");
+      score += Math.min(moa.length / 10, 5);
+      
+      const mod = sanitizeText(projet["Maître d'ouvrage délégué"] || "");
+      score += Math.min(mod.length / 10, 5);
+      
+      const gestionnaire = sanitizeText(projet["Gestionnaire après achèvement du projet"] || "");
+      score += Math.min(gestionnaire.length / 10, 5);
+      
+      return score;
+    }
+
+    const _projets = Array.isArray(projets) ? projets : [];
+  %>
+
+  <% _projets.forEach(function(p) { 
+    const density = calculateContentDensity(p);
+    const pageClass = density > 45 ? 'compact' : 'adaptive';
+  %>
+  <div class="page <%= pageClass %>">
+    <div class="header">
+      <div class="header-left">Province de Safi</div>
+      <div class="header-right">Projet N° <%= p["Num Projet"] || p.num_projet || '–' %></div>
+    </div>
+
+    <h1>FICHE PROJET</h1>
+
+    <table>
+      <colgroup>
+        <col class="col1">
+        <col class="col2">
+        <col class="col3">
+        <col class="col4">
+      </colgroup>
+
+      <tr>
+        <td class="section-title">Axe</td>
+        <td colspan="3"><strong><%= (color && color.name) || 'Axe Stratégique' %></strong></td>
+      </tr>
+
+      <tr>
+        <td class="section-title">Secteur</td>
+        <td colspan="3"><strong><%= sanitizeText(p["Secteur"]) %></strong></td>
+      </tr>
+
+      <tr>
+        <td class="label"><strong>INTITULÉ DU PROJET</strong></td>
+        <td colspan="3"><%= sanitizeText(p["Intitulé du Projet"]) %></td>
+      </tr>
+
+      <tr>
+        <td class="label">Province</td>
+        <td colspan="3">Safi</td>
+      </tr>
+
+      <tr>
+        <td class="label">Commune(s)</td>
+        <td colspan="3"><%= sanitizeText(p["Commune"]) %></td>
+      </tr>
+
+      <tr>
+        <td class="label"><strong>Objectifs du projet</strong></td>
+        <td colspan="3">
+          <%
+            const objParts = getListParts(p["Objectifs du projet (argumentaires)"]);
+            if (objParts.length > 1) { %>
+          <ul class="bullet-list">
+            <% objParts.forEach(function(line){ %>
+            <li><%= line %></li>
+            <% }); %>
+          </ul>
+          <% } else { %>
+          <%= objParts[0] || '–' %>
+          <% } %>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="label"><strong>Composantes du projet</strong></td>
+        <td colspan="3">
+          <%
+            const compParts = getListParts(p["Composantes du projet"]);
+            if (compParts.length > 1) { %>
+          <ul class="bullet-list">
+            <% compParts.forEach(function(line){ %>
+            <li><%= line %></li>
+            <% }); %>
+          </ul>
+          <% } else { %>
+          <%= compParts[0] || '–' %>
+          <% } %>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="label">Consistance du projet</td>
+        <td><%
+            const consParts = getListParts(p["Consistance du projet (superficie, linéaire,…)"]);
+            if (consParts.length > 1) { %><ul class="bullet-list"><% consParts.forEach(function(line){ %><li><%= line %></li><% }); %></ul><% } else { %><%= consParts[0] || '–' %><% } %></td>
+        <td class="label">Coût du projet (MDH)</td>
+        <td><%= sanitizeText(p["Coût du projet (MDHs)"]) %></td>
+      </tr>
+
+      <tr>
+        <td class="label" rowspan="2">Impact du projet</td>
+        <td class="label2">Nombre d&#39;emplois direct</td>
+        <td colspan="2"><%= sanitizeText(p["Nombre d'emplois direct"]) %></td>
+      </tr>
+      <tr>
+        <td class="label2">Nombres des bénéficiaires par catégories cibles</td>
+        <td colspan="2"><%= sanitizeText(p["Nombres des bénéficiaires par catégories cibles"]) %></td>
+      </tr>
+
+      <tr>
+        <td class="label">Durée (mois)</td>
+        <td><%= sanitizeText(p["Durée du projet (En mois)"]) %></td>
+        <td class="label">Échéancier</td>
+        <td><%= sanitizeText(p["Echéancier"]) %></td>
+      </tr>
+
+      <tr>
+        <td class="label">Maître d&#39;ouvrage</td>
+        <td><%= sanitizeText(p["Maître d'ouvrage"]) %></td>
+        <td class="label">Maître d&#39;ouvrage délégué</td>
+        <td><%= sanitizeText(p["Maître d'ouvrage délégué"]) %></td>
+      </tr>
+
+      <tr>
+        <td class="label" rowspan="4">Foncier</td>
+        <td class="label2">Disponibilité</td>
+        <td colspan="2"><%= sanitizeText(p["Disponibilité Foncier"]) %></td>
+      </tr>
+      <tr>
+        <td class="label2">Si non, visibilité sur sa mobilisation sans contrainte (oui/non)</td>
+        <td colspan="2"><%
+          const visField = p["Si non, visibilité sur sa mobilisation sans contrainte (oui/non)"] 
+            || p["Si non, visibilité sur sa mobilisation sans contrainte (oui/no"] 
+            || p["Si non, visibilité"] 
+            || p["Visibilité sur sa mobilisation sans contrainte"];
+          %><%= sanitizeText(visField) %></td>
+      </tr>
+      <tr>
+        <td class="label2">Statut juridique</td>
+        <td colspan="2"><%= sanitizeText(p["Statut juridique"]) %></td>
+      </tr>
+      <tr>
+        <td class="label2">Assiette assainie</td>
+        <td colspan="2"><%= sanitizeText(p["Assiette assainie"]) %></td>
+      </tr>
+
+      <tr>
+        <td class="label" rowspan="2">Étude</td>
+        <td class="label2">Disponible</td>
+        <td colspan="2"><%= sanitizeText(p["Etude Disponible"]) %></td>
+      </tr>
+      <tr>
+        <td class="label2">Si Oui état d&#39;avancement</td>
+        <td colspan="2"><%= sanitizeText(p["Si Oui état d'avancement"]) %></td>
+      </tr>
+
+      <tr>
+        <td class="label">Gestionnaire après achèvement</td>
+        <td colspan="3"><%= sanitizeText(p["Gestionnaire après achèvement du projet"]) %></td>
+      </tr>
+    </table>
+  </div>
+  <% }); %>
+</body>
+
+</html>

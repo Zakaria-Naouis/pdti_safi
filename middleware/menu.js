@@ -105,10 +105,10 @@ module.exports = async function(req, res, next) {
     // ============================================
 
     // ============================================
-    // Menu Export - Coordinateur uniquement (profile_id === 4)
+    // Menu Export - Coordinateur ET Administrateur (profile_id === 4 OU 1)
     // ============================================
-    if (user.profile_id === 4) {
-      console.log(`✅ Menu Export ajouté pour l'utilisateur ${user.email} (profile_id: ${user.profile_id}, pole_id: ${user.pole_id})`);
+    if (user.profile_id === 4 || user.profile_id === 1) {
+      console.log(`✅ Menu Export ajouté pour l'utilisateur ${user.email} (profile_id: ${user.profile_id}${user.pole_id ? ', pole_id: ' + user.pole_id : ''})`);
       menuItems.push({
         title: 'Export',
         url: '#',

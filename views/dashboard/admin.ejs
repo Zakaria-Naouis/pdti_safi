@@ -1,4 +1,4 @@
-<!-- views/dashboard/admin.ejs - Version complète CORRIGÉE -->
+<!-- views/dashboard/admin.ejs - VERSION COMPLÈTE AVEC AFFICHAGE RÉORGANISÉ -->
 
 <% if (successMessage) { %>
 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -10,93 +10,265 @@
 <!-- Section: Statistiques globales -->
 <div class="row">
   <div class="col-md-12">
-    <div class="card">
-      <div class="card-header">
-        <h5><i class="fas fa-chart-bar me-2"></i>Statistiques globales</h5>
+    <div class="card shadow-lg">
+      <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-globe me-2"></i>Statistiques Globales Hiérarchiques
+          </h5>
+          <span class="badge bg-light text-dark">
+            <i class="fas fa-cube me-1"></i>Vision Complète
+          </span>
+        </div>
       </div>
-      <div class="card-body">
-        <div class="row">
+
+      <!-- TOTAUX GLOBAUX -->
+      <div class="card-body bg-light">
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <h6 class="text-muted mb-3">
+              <i class="fas fa-chart-pie me-2"></i>Résumé Global
+            </h6>
+          </div>
+          <% if (globalTotalStats) { %>
           <div class="col-md-3">
-            <div class="card bg-primary text-white">
-              <div class="card-body text-center">
-                <i class="fas fa-project-diagram fa-2x mb-2"></i>
-                <h5 class="card-title">Total Projets</h5>
-                <h3 class="display-4"><%= stats.total_projets %></h3>
+            <div class="card border-left-primary shadow h-100 py-2">
+              <div class="card-body">
+                <div class="text-primary text-uppercase mb-1">
+                  <small><strong>Total Projets</strong></small>
+                </div>
+                <div class="h3 mb-0">
+                  <strong><%= globalTotalStats.nombre_projets %></strong>
+                </div>
               </div>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="card bg-success text-white">
-              <div class="card-body text-center">
-                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
-                <h5 class="card-title">Coût Total</h5>
-                <h3 class="display-4"><%= stats.cout_total.toFixed(2) %></h3>
-                <small>MDH</small>
+            <div class="card border-left-success shadow h-100 py-2">
+              <div class="card-body">
+                <div class="text-success text-uppercase mb-1">
+                  <small><strong>Coût Total (MDH)</strong></small>
+                </div>
+                <div class="h3 mb-0">
+                  <strong><%= parseFloat(globalTotalStats.cout_total_mdh || 0).toFixed(2) %></strong>
+                </div>
               </div>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="card bg-info text-white">
-              <div class="card-body text-center">
-                <i class="fas fa-users fa-2x mb-2"></i>
-                <h5 class="card-title">Emplois Directs</h5>
-                <h3 class="display-4"><%= stats.total_emplois %></h3>
+            <div class="card border-left-info shadow h-100 py-2">
+              <div class="card-body">
+                <div class="text-info text-uppercase mb-1">
+                  <small><strong>Emplois Directs</strong></small>
+                </div>
+                <div class="h3 mb-0">
+                  <strong><%= globalTotalStats.total_emplois_directs %></strong>
+                </div>
               </div>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="card bg-warning text-white">
-              <div class="card-body text-center">
-                <i class="fas fa-user-friends fa-2x mb-2"></i>
-                <h5 class="card-title">Bénéficiaires</h5>
-                <h3 class="display-4"><%= stats.total_beneficiaires %></h3>
+            <div class="card border-left-warning shadow h-100 py-2">
+              <div class="card-body">
+                <div class="text-warning text-uppercase mb-1">
+                  <small><strong>Bénéficiaires</strong></small>
+                </div>
+                <div class="h3 mb-0">
+                  <strong><%= globalTotalStats.total_beneficiaires %></strong>
+                </div>
               </div>
             </div>
           </div>
+          <% } %>
+        </div>
+
+        <!-- AXES RÉORGANISÉS EN UNE LIGNE -->
+        <div class="row mt-4">
+          <div class="col-md-12">
+            <h6 class="text-muted mb-3">
+              <i class="fas fa-list-ul me-2"></i>Détails par Axe
+            </h6>
+          </div>
+        </div>
+
+        <div id="globalHierarchicalStatsContainer">
+          <% if (globalHierarchy && globalHierarchy.length > 0) { %>
+          <% globalHierarchy.forEach(function(axe, axeIndex) { 
+              // COULEURS PAR AXE - Mapping exact
+              let axeColor = '#666666';
+              let axeColorLight = '#f8f8f8';
+              let axeColorBorder = '#999999';
+              
+              const axeColorMap = {
+                'Investissements et emplois': { main: '#BF9000', light: '#FFF8E7', border: '#D4A017' },
+                'Renforcement et amélioration des services sociaux de base : Education': { main: '#DD6615', light: '#FFE8D6', border: '#E87E2E' },
+                'Renforcement des services sociaux de base : Santé': { main: '#385623', light: '#E8F0E0', border: '#5A7A3D' },
+                'Infrastructures de base et mise à niveau': { main: '#595959', light: '#F0F0F0', border: '#808080' },
+                'Gestion Proactive et durable des ressources en eau': { main: '#002060', light: '#E6E6F0', border: '#003399' }
+              };
+              
+              for (const [axeName, colors] of Object.entries(axeColorMap)) {
+                if (axe.axe_libelle && axe.axe_libelle.includes(axeName.split(':')[0])) {
+                  axeColor = colors.main;
+                  axeColorLight = colors.light;
+                  axeColorBorder = colors.border;
+                  break;
+                }
+              }
+            %>
+
+          <!-- LIGNE AXE RÉORGANISÉE -->
+          <div class="axe-stat-row mb-2" data-axe="<%= axeIndex + 1 %>" style="border-left-color: <%= axeColor %>;">
+            <div class="axe-stat-content">
+              <div class="axe-stat-left">
+                <span class="axe-stat-icon"><%= ['🎯', '🎓', '🏥', '💧', '🏗️'][axeIndex] %></span>
+                <h6 class="axe-stat-title" style="color: <%= axeColor %>;"><%= axe.axe_libelle || 'Axe sans nom' %></h6>
+              </div>
+
+              <div class="axe-stat-actions">
+                <div class="axe-stat-badges">
+                  <span class="axe-stat-badge badge-projets" style="background-color: <%= axeColorLight %>; color: <%= axeColor %>;">
+                    <i class="fas fa-folder"></i> <%= axe.stats.nombre_projets %>
+                  </span>
+                  <span class="axe-stat-badge badge-budget" style="background-color: <%= axeColorLight %>; color: <%= axeColor %>;">
+                    <i class="fas fa-dollar-sign"></i> <%= parseFloat(axe.stats.cout_total_mdh || 0).toFixed(2) %> MDH
+                  </span>
+                  <span class="axe-stat-badge badge-conventions" style="background-color: <%= axeColorLight %>; color: <%= axeColor %>;">
+                    <i class="fas fa-briefcase"></i> <%= axe.stats.total_emplois_directs %>
+                  </span>
+                  <span class="axe-stat-badge badge-beneficiaires" style="background-color: <%= axeColorLight %>; color: <%= axeColor %>;">
+                    <i class="fas fa-users"></i> <%= axe.stats.total_beneficiaires %>
+                  </span>
+                </div>
+
+                <button class="btn-export-axe export-axe-btn" data-axe-id="<%= axe.axe_id %>" style="background-color: <%= axeColor %>;">
+                  <i class="fas fa-file-pdf"></i> Exporter Fiches Projets
+                </button>
+
+                <button class="btn-toggle-axe collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAxeGlobal<%= axeIndex %>" style="color: <%= axeColor %>;">
+                  <i class="fas fa-chevron-down"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONTENU DÉTAILLÉ DE L'AXE (COLLAPSIBLE) -->
+          <div id="collapseAxeGlobal<%= axeIndex %>" class="collapse mb-3">
+            <div class="card" style="border-left: 4px solid <%= axeColor %>; margin-left: 20px;">
+              <div class="card-body p-0">
+                <!-- TABLEAU DES SECTEURS -->
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped mb-0">
+                    <thead style="background-color: <%= axeColorLight %>;">
+                      <tr>
+                        <th style="width: 25%; color: <%= axeColor %>;"><strong>
+                            <i class="fas fa-layer-group me-2"></i>Secteur
+                          </strong></th>
+                        <th class="text-center" style="width: 12%; color: <%= axeColor %>;"><strong>
+                            <i class="fas fa-cubes me-1"></i>Projets
+                          </strong></th>
+                        <th class="text-center" style="width: 18%; color: <%= axeColor %>;"><strong>
+                            <i class="fas fa-dollar-sign me-1"></i>Montant (MDH)
+                          </strong></th>
+                        <th class="text-center" style="width: 12%; color: <%= axeColor %>;"><strong>
+                            <i class="fas fa-briefcase me-1"></i>Emplois
+                          </strong></th>
+                        <th class="text-center" style="width: 18%; color: <%= axeColor %>;"><strong>
+                            <i class="fas fa-users me-1"></i>Bénéficiaires
+                          </strong></th>
+                        <th class="text-center" style="width: 15%;"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% if (axe.secteurs && axe.secteurs.length > 0) { %>
+                      <% axe.secteurs.forEach(function(secteur, secteurIndex) { %>
+                      <!-- Ligne Secteur -->
+                      <tr class="secteur-row-themed" data-axe-id="<%= axe.axe_id %>" data-secteur-id="<%= secteur.secteur_id %>" role="button">
+                        <td class="secteur-toggle-themed">
+                          <strong style="color: <%= axeColor %>;">
+                            <i class="fas fa-caret-right secteur-icon-themed me-2" style="color: <%= axeColor %>;"></i>
+                            <%= secteur.secteur_libelle || 'Secteur sans nom' %>
+                          </strong>
+                        </td>
+                        <td class="text-center"><strong><%= secteur.stats.nombre_projets %></strong></td>
+                        <td class="text-center"><strong><%= parseFloat(secteur.stats.cout_total_mdh || 0).toFixed(2) %></strong></td>
+                        <td class="text-center"><strong><%= secteur.stats.total_emplois_directs %></strong></td>
+                        <td class="text-center"><strong><%= secteur.stats.total_beneficiaires %></strong></td>
+                        <td class="text-center">
+                          <button class="btn btn-sm secteur-collapse-btn-themed" data-axe-id="<%= axe.axe_id %>" data-secteur-id="<%= secteur.secteur_id %>" style="background-color: <%= axeColor %>; color: white; border: none;">
+                            <i class="fas fa-chevron-down"></i>
+                          </button>
+                        </td>
+                      </tr>
+
+                      <!-- Détails Objectifs -->
+                      <tr class="objectif-details-themed" id="details-themed-axe<%= axe.axe_id %>-secteur<%= secteur.secteur_id %>" style="display: none;">
+                        <td colspan="6" class="p-0">
+                          <div style="background-color: <%= axeColorLight %>; padding: 10px;">
+                            <table class="table table-bordered table-sm mb-0" style="font-size: 0.9em;">
+                              <thead style="background-color: white;">
+                                <tr>
+                                  <th style="width: 25%; color: <%= axeColor %>;"><i class="fas fa-tasks me-1"></i>Objectif</th>
+                                  <th class="text-center" style="width: 12%; color: <%= axeColor %>;">Projets</th>
+                                  <th class="text-center" style="width: 18%; color: <%= axeColor %>;">Montant (MDH)</th>
+                                  <th class="text-center" style="width: 12%; color: <%= axeColor %>;">Emplois</th>
+                                  <th class="text-center" style="width: 18%; color: <%= axeColor %>;">Bénéficiaires</th>
+                                  <th class="text-center" style="width: 15%;"></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <% if (secteur.objectifs && secteur.objectifs.length > 0) { %>
+                                <% secteur.objectifs.forEach(function(objectif) { %>
+                                <tr class="objectif-row-themed" style="background-color: white;">
+                                  <td><i class="fas fa-angle-double-right me-2" style="color: <%= axeColor %>;"></i><%= objectif.objectif_libelle || 'Objectif sans nom' %></td>
+                                  <td class="text-center"><%= objectif.nombre_projets %></td>
+                                  <td class="text-center"><%= parseFloat(objectif.cout_total_mdh || 0).toFixed(2) %></td>
+                                  <td class="text-center"><%= objectif.total_emplois_directs %></td>
+                                  <td class="text-center"><%= objectif.total_beneficiaires %></td>
+                                  <td class="text-center">
+                                    <a href="/projects?axe=<%= axe.axe_id %>&secteur=<%= secteur.secteur_id %>&objectif=<%= objectif.objectif_id %>" class="btn btn-sm" style="background-color: <%= axeColor %>; color: white;">
+                                      <i class="fas fa-eye"></i> Voir
+                                    </a>
+                                  </td>
+                                </tr>
+                                <% }); %>
+                                <% } else { %>
+                                <tr>
+                                  <td colspan="6" class="text-center text-muted"><em>Aucun objectif</em></td>
+                                </tr>
+                                <% } %>
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                      <% }); %>
+                      <% } else { %>
+                      <tr>
+                        <td colspan="6" class="text-center text-muted"><em>Aucun secteur</em></td>
+                      </tr>
+                      <% } %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <% }); %>
+          <% } else { %>
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>Aucune donnée hiérarchique disponible
+          </div>
+          <% } %>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Section: Statistiques par Pôle -->
-<div class="row mt-4">
-  <div class="col-md-12">
-    <div class="card">
-      <div class="card-header">
-        <h5><i class="fas fa-building me-2"></i>Statistiques par Pôle</h5>
-      </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-striped table-hover">
-            <thead class="table-dark">
-              <tr>
-                <th>Pôle</th>
-                <th class="text-center">Nombre de Projets</th>
-                <th class="text-end">Coût Total (MDH)</th>
-                <th class="text-center">Emplois Directs</th>
-                <th class="text-center">Bénéficiaires</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% polesStats.forEach(function(pole) { %>
-              <tr>
-                <td class="fw-bold"><%= pole.lib_pole %></td>
-                <td class="text-center">
-                  <span class="badge bg-primary rounded-pill"><%= pole.total_projets %></span>
-                </td>
-                <td class="text-end text-success fw-bold"><%= pole.cout_total.toFixed(2) %></td>
-                <td class="text-center"><%= pole.total_emplois %></td>
-                <td class="text-center"><%= pole.total_beneficiaires %></td>
-              </tr>
-              <% }); %>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- ✅ ANCRE : La page reviendra à cet endroit après pagination -->
+<div id="gestion-projets"></div>
 
 <!-- Section: Gestion des Projets -->
 <div class="row mt-4">
@@ -127,14 +299,13 @@
             </div>
           </div>
 
-          <!-- FILTRE PAR AXE UNIQUEMENT -->
           <div class="col-md-4">
             <select class="form-select" id="filter-axe">
               <option value="">🎯 Tous les axes</option>
               <% if (typeof axes !== 'undefined' && axes && axes.length > 0) { %>
               <% axes.forEach(function(axe) { %>
-              <option value="<%= axe.id %>">
-                <%= axe.lib_pole %> - Axe <%= axe.id %>: <%= axe.lib_axe %>
+              <option value="<%= axe.id %>" <%= currentAxeFilter == axe.id ? 'selected' : '' %>>
+                Axe <%= axe.id %> : <%- axe.lib_axe %>
               </option>
               <% }); %>
               <% } %>
@@ -166,24 +337,23 @@
             </thead>
             <tbody>
               <% projects.forEach(function(project) { %>
-              <tr data-project-id="<%= project.id %>" data-axe-id="<%= project.axe_id %>" data-debug-axe="<%= project.axe_id %>">
-                <!-- AJOUT d'un attribut de debug pour vérifier -->
+              <tr data-project-id="<%= project.id %>" data-axe-id="<%= project.axe_id %>">
                 <td>
                   <span class="badge bg-primary fs-6"><%= project.num_projet %></span>
                 </td>
                 <td>
                   <a href="/projects/view/<%= project.id %>" class="text-decoration-none text-dark fw-bold">
-                    <%= project.intitule.substring(0, 60) %><%= project.intitule.length > 60 ? '...' : '' %>
+                    <%- project.intitule.substring(0, 60) %><%= project.intitule.length > 60 ? '...' : '' %>
                   </a>
                 </td>
                 <td>
-                  <small class="text-muted"><%= project.lib_pole %></small>
+                  <small class="text-muted"><%- project.lib_pole %></small>
                 </td>
                 <td>
-                  <small class="text-muted">Axe <%= project.axe_id %>: <%= project.lib_axe %></small>
+                  <small class="text-muted">Axe <%= project.axe_id %></small>
                 </td>
                 <td>
-                  <small class="text-muted"><%= project.lib_secteur %></small>
+                  <small class="text-muted"><%- project.lib_secteur %></small>
                 </td>
                 <td class="text-end">
                   <span class="fw-bold text-success">
@@ -204,37 +374,39 @@
                     <a href="/projects/edit/<%= project.id %>" class="btn btn-outline-primary" title="Modifier">
                       <i class="fas fa-edit"></i>
                     </a>
-                    <button class="btn btn-outline-danger btn-delete-project" data-id="<%= project.id %>" data-title="<%= project.intitule %>" title="Supprimer">
+                    <button class="btn btn-outline-danger btn-delete-project" data-id="<%= project.id %>" data-title="<%- project.intitule %>" title="Supprimer">
                       <i class="fas fa-trash"></i>
                     </button>
                   </div>
                 </td>
               </tr>
               <% }); %>
-
-              <% if (projects.length === 0) { %>
-              <tr id="empty-state-row">
-                <td colspan="9" class="text-center py-5">
-                  <i class="fas fa-folder-open text-muted" style="font-size: 4rem;"></i>
-                  <p class="mt-3 text-muted fs-5">Aucun projet trouvé</p>
-                </td>
-              </tr>
-              <% } %>
             </tbody>
           </table>
         </div>
 
         <!-- Pagination -->
-        <% if (pagination.totalPages > 1) { %>
+        <% if (pagination && pagination.totalPages > 1) { %>
         <nav aria-label="Pagination des projets" class="mt-4">
+          <%
+          function buildPageUrl(pageNum) {
+            let url = '?page=' + pageNum;
+            if (currentAxeFilter) {
+              url += '&axe=' + currentAxeFilter;
+            }
+            url += '#gestion-projets';
+            return url;
+          }
+          %>
+
           <ul class="pagination justify-content-center">
             <li class="page-item <%= !pagination.hasPrev ? 'disabled' : '' %>">
-              <a class="page-link" href="?page=1" tabindex="-1">
+              <a class="page-link" href="<%= buildPageUrl(1) %>" tabindex="-1">
                 <i class="fas fa-angle-double-left"></i>
               </a>
             </li>
             <li class="page-item <%= !pagination.hasPrev ? 'disabled' : '' %>">
-              <a class="page-link" href="?page=<%= pagination.currentPage - 1 %>">
+              <a class="page-link" href="<%= buildPageUrl(pagination.currentPage - 1) %>">
                 <i class="fas fa-angle-left"></i> Précédent
               </a>
             </li>
@@ -248,7 +420,7 @@
             
             for (let i = startPage; i <= endPage; i++) { %>
             <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
-              <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+              <a class="page-link" href="<%= buildPageUrl(i) %>"><%= i %></a>
             </li>
             <% }
             
@@ -256,20 +428,16 @@
             <li class="page-item disabled"><span class="page-link">...</span></li>
             <% } %>
             <li class="page-item <%= !pagination.hasNext ? 'disabled' : '' %>">
-              <a class="page-link" href="?page=<%= pagination.currentPage + 1 %>">
+              <a class="page-link" href="<%= buildPageUrl(pagination.currentPage + 1) %>">
                 Suivant <i class="fas fa-angle-right"></i>
               </a>
             </li>
             <li class="page-item <%= !pagination.hasNext ? 'disabled' : '' %>">
-              <a class="page-link" href="?page=<%= pagination.totalPages %>">
+              <a class="page-link" href="<%= buildPageUrl(pagination.totalPages) %>">
                 <i class="fas fa-angle-double-right"></i>
               </a>
             </li>
           </ul>
-          <div class="text-center text-muted mt-2">
-            Page <%= pagination.currentPage %> sur <%= pagination.totalPages %>
-            (Total: <%= pagination.totalItems %> projets)
-          </div>
         </nav>
         <% } %>
       </div>
@@ -277,9 +445,9 @@
   </div>
 </div>
 
-<!-- Modal de confirmation de suppression -->
+<!-- Modal de suppression -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-danger text-white">
         <h5 class="modal-title" id="deleteModalLabel">
@@ -288,19 +456,12 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p class="fs-5">Êtes-vous sûr de vouloir supprimer ce projet ?</p>
-        <div class="alert alert-warning">
-          <strong id="projectTitle"></strong>
-        </div>
-        <p class="text-danger mb-0">
-          <i class="fas fa-info-circle me-1"></i>
-          <strong>Attention :</strong> Cette action est irréversible.
-        </p>
+        <p>Êtes-vous sûr de vouloir supprimer le projet suivant ?</p>
+        <p class="fw-bold" id="projectTitle"></p>
+        <p class="text-danger"><small>Cette action est irréversible.</small></p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="fas fa-times me-1"></i>Annuler
-        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
         <button type="button" class="btn btn-danger" id="confirmDelete">
           <i class="fas fa-trash me-1"></i>Supprimer
         </button>
@@ -311,145 +472,157 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('=== DÉMARRAGE FILTRAGE ===');
+    console.log('🚀 Initialisation Dashboard Admin');
 
-    // DIAGNOSTIC COMPLET AU CHARGEMENT
-    const allRows = document.querySelectorAll('#projects-table tbody tr[data-project-id]');
-    console.log('📊 Nombre total de projets:', allRows.length);
+    // ========== EXPORT FICHES PROJETS PAR AXE ==========
+    const exportAxeButtons = document.querySelectorAll('.export-axe-btn');
+    exportAxeButtons.forEach(btn => {
+      btn.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        const axeId = this.getAttribute('data-axe-id');
 
-    // Afficher tous les axe_id
-    allRows.forEach((row, index) => {
-      const axeId = row.getAttribute('data-axe-id');
-      const projectId = row.getAttribute('data-project-id');
-      console.log(`Projet ${index + 1}: ID=${projectId}, axe_id="${axeId}", type=${typeof axeId}`);
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Export...';
+        this.disabled = true;
+
+        try {
+          const response = await fetch(`/export/fiches-projets/${axeId}`);
+
+          if (!response.ok) throw new Error('Erreur export');
+
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Fiches_Projets_Axe${axeId}_${new Date().toISOString().split('T')[0]}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          a.remove();
+
+        } catch (error) {
+          console.error('Erreur:', error);
+          alert('Erreur lors de l\'export');
+        } finally {
+          this.innerHTML = originalText;
+          this.disabled = false;
+        }
+      });
     });
 
-    // Afficher les options du select
+    // ========== TOGGLE DES AXES (CHEVRON) ==========
+    const axeToggleButtons = document.querySelectorAll('.btn-toggle-axe');
+    axeToggleButtons.forEach(button => {
+      const target = button.getAttribute('data-bs-target');
+      const collapseElement = document.querySelector(target);
+
+      if (collapseElement) {
+        collapseElement.addEventListener('show.bs.collapse', function() {
+          button.classList.remove('collapsed');
+          button.querySelector('i').classList.remove('fa-chevron-down');
+          button.querySelector('i').classList.add('fa-chevron-up');
+        });
+
+        collapseElement.addEventListener('hide.bs.collapse', function() {
+          button.classList.add('collapsed');
+          button.querySelector('i').classList.remove('fa-chevron-up');
+          button.querySelector('i').classList.add('fa-chevron-down');
+        });
+      }
+    });
+
+    // ========== DÉPLIANT DES SECTEURS ==========
+    const secteurCollapseButtons = document.querySelectorAll('.secteur-collapse-btn-themed');
+    secteurCollapseButtons.forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        const axeId = this.getAttribute('data-axe-id');
+        const secteurId = this.getAttribute('data-secteur-id');
+        const detailsId = `details-themed-axe${axeId}-secteur${secteurId}`;
+        const detailsRow = document.getElementById(detailsId);
+        const sectionRow = this.closest('.secteur-row-themed');
+        const icon = this.querySelector('i');
+        const secteurIcon = sectionRow.querySelector('.secteur-icon-themed');
+
+        if (detailsRow) {
+          const isVisible = detailsRow.style.display !== 'none';
+          detailsRow.style.display = isVisible ? 'none' : 'table-row';
+
+          if (isVisible) {
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+            sectionRow.classList.remove('expanded');
+            if (secteurIcon) {
+              secteurIcon.classList.remove('fa-caret-down');
+              secteurIcon.classList.add('fa-caret-right');
+            }
+          } else {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+            sectionRow.classList.add('expanded');
+            if (secteurIcon) {
+              secteurIcon.classList.remove('fa-caret-right');
+              secteurIcon.classList.add('fa-caret-down');
+            }
+          }
+        }
+      });
+    });
+
+    // ========== CLIC SUR LIGNE SECTEUR ==========
+    const toggles = document.querySelectorAll('.secteur-toggle-themed');
+    toggles.forEach(toggle => {
+      toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const button = this.closest('.secteur-row-themed').querySelector('.secteur-collapse-btn-themed');
+        if (button) button.click();
+      });
+    });
+
+    // ========== FILTRE PAR AXE ==========
     const filterAxe = document.getElementById('filter-axe');
     if (filterAxe) {
-      console.log('📋 Options du select:');
-      Array.from(filterAxe.options).forEach(opt => {
-        console.log(`  - Value: "${opt.value}", Text: ${opt.text}`);
+      filterAxe.addEventListener('change', function() {
+        const selectedAxe = this.value;
+        let url = window.location.pathname;
+
+        if (selectedAxe) {
+          url += '?axe=' + selectedAxe;
+        }
+
+        url += '#gestion-projets';
+        window.location.href = url;
       });
     }
 
-    // VARIABLES
-    const searchInput = document.getElementById('search-projects');
-    const resetFiltersBtn = document.getElementById('reset-filters-btn');
-    let activeSearchTerm = '';
-    let activeAxeFilter = '';
+    // ========== BOUTON RÉINITIALISER ==========
+    const resetBtn = document.getElementById('reset-filters-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        window.location.href = window.location.pathname + '#gestion-projets';
+      });
+    }
 
-    // RECHERCHE
+    // ========== RECHERCHE CÔTÉ CLIENT ==========
+    const searchInput = document.getElementById('search-projects');
     if (searchInput) {
       searchInput.addEventListener('input', function() {
-        activeSearchTerm = this.value.toLowerCase().trim();
-        applyFilters();
-      });
-    }
+        const searchTerm = this.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('#projects-table tbody tr[data-project-id]');
 
-    // FILTRAGE PAR AXE
-    if (filterAxe) {
-      filterAxe.addEventListener('change', function() {
-        activeAxeFilter = this.value;
-        console.log('🎯 AXE SÉLECTIONNÉ:', activeAxeFilter);
-        applyFilters();
-      });
-    }
-
-    // RÉINITIALISATION
-    if (resetFiltersBtn) {
-      resetFiltersBtn.addEventListener('click', function() {
-        if (searchInput) searchInput.value = '';
-        if (filterAxe) filterAxe.value = '';
-        activeSearchTerm = '';
-        activeAxeFilter = '';
-        applyFilters();
-        showToast('Filtres réinitialisés', 'info');
-      });
-    }
-
-    // FONCTION DE FILTRAGE
-    function applyFilters() {
-      console.log('--- APPLICATION FILTRES ---');
-      console.log('Recherche:', activeSearchTerm);
-      console.log('Axe:', activeAxeFilter);
-
-      const rows = document.querySelectorAll('#projects-table tbody tr[data-project-id]');
-      let visibleCount = 0;
-
-      rows.forEach((row, index) => {
-        let showRow = true;
-
-        // Filtre recherche
-        if (activeSearchTerm) {
+        rows.forEach(row => {
           const text = row.textContent.toLowerCase();
-          showRow = showRow && text.includes(activeSearchTerm);
-        }
-
-        // Filtre axe
-        if (activeAxeFilter && activeAxeFilter !== '') {
-          const rowAxeId = row.getAttribute('data-axe-id');
-
-          // Conversion en string et suppression des espaces
-          const normalizedRowAxeId = String(rowAxeId).trim();
-          const normalizedFilterAxeId = String(activeAxeFilter).trim();
-
-          const matches = normalizedRowAxeId === normalizedFilterAxeId;
-
-          console.log(`Ligne ${index + 1}: "${normalizedRowAxeId}" === "${normalizedFilterAxeId}" ? ${matches}`);
-
-          showRow = showRow && matches;
-        }
-
-        // Afficher/masquer
-        if (showRow) {
-          row.style.display = '';
-          visibleCount++;
-        } else {
-          row.style.display = 'none';
-        }
+          if (text.includes(searchTerm)) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
       });
-
-      console.log(`✅ ${visibleCount} projet(s) visible(s)`);
-      console.log('--- FIN FILTRAGE ---\n');
-
-      updateNoResultsMessage(visibleCount);
     }
 
-    // MESSAGE AUCUN RÉSULTAT
-    function updateNoResultsMessage(visibleCount) {
-      const tbody = document.querySelector('#projects-table tbody');
-      let noResultsRow = tbody.querySelector('.no-results-row');
-
-      if (visibleCount === 0) {
-        const emptyStateRow = document.getElementById('empty-state-row');
-        if (emptyStateRow) emptyStateRow.style.display = 'none';
-
-        if (!noResultsRow) {
-          noResultsRow = document.createElement('tr');
-          noResultsRow.className = 'no-results-row';
-          noResultsRow.innerHTML = `
-            <td colspan="9" class="text-center py-5">
-              <i class="fas fa-search text-muted" style="font-size: 3rem;"></i>
-              <p class="mt-3 text-muted fs-5">Aucun projet trouvé</p>
-              <button class="btn btn-sm btn-outline-secondary" id="reset-from-msg">
-                <i class="fas fa-redo me-1"></i>Réinitialiser
-              </button>
-            </td>
-          `;
-          tbody.appendChild(noResultsRow);
-          document.getElementById('reset-from-msg').addEventListener('click', function() {
-            resetFiltersBtn.click();
-          });
-        } else {
-          noResultsRow.style.display = '';
-        }
-      } else {
-        if (noResultsRow) noResultsRow.style.display = 'none';
-      }
-    }
-
-    // SUPPRESSION
+    // ========== SUPPRESSION DE PROJET ==========
     const deleteButtons = document.querySelectorAll('.btn-delete-project');
     const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
     let projectIdToDelete = null;
@@ -465,6 +638,7 @@
 
     document.getElementById('confirmDelete').addEventListener('click', function() {
       if (!projectIdToDelete) return;
+
       this.disabled = true;
       this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Suppression...';
 
@@ -478,17 +652,12 @@
         .then(data => {
           if (data.success) {
             deleteModal.hide();
-            const row = document.querySelector(`tr[data-project-id="${projectIdToDelete}"]`);
-            if (row) {
-              row.style.opacity = '0';
-              setTimeout(() => row.remove(), 300);
-            }
-            showToast('Projet supprimé', 'success');
+            window.location.href = window.location.href;
           } else {
-            showToast('Erreur: ' + data.message, 'error');
+            alert('Erreur: ' + data.message);
           }
         })
-        .catch(error => showToast('Erreur de suppression', 'error'))
+        .catch(error => alert('Erreur de suppression'))
         .finally(() => {
           const btn = document.getElementById('confirmDelete');
           btn.disabled = false;
@@ -497,50 +666,161 @@
         });
     });
 
-    // TOASTS
-    function showToast(message, type = 'info') {
-      const toastContainer = document.getElementById('toast-container') || createToastContainer();
-      const bgColors = {
-        'success': 'bg-success',
-        'error': 'bg-danger',
-        'info': 'bg-info'
-      };
-      const icons = {
-        'success': 'fa-check-circle',
-        'error': 'fa-exclamation-triangle',
-        'info': 'fa-info-circle'
-      };
-
-      const toast = document.createElement('div');
-      toast.className = `toast align-items-center text-white ${bgColors[type]} border-0`;
-      toast.setAttribute('role', 'alert');
-      toast.innerHTML = `
-        <div class="d-flex">
-          <div class="toast-body"><i class="fas ${icons[type]} me-2"></i>${message}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>`;
-
-      toastContainer.appendChild(toast);
-      new bootstrap.Toast(toast, {
-        delay: 3000
-      }).show();
-      toast.addEventListener('hidden.bs.toast', () => toast.remove());
-    }
-
-    function createToastContainer() {
-      const container = document.createElement('div');
-      container.id = 'toast-container';
-      container.className = 'toast-container position-fixed top-0 end-0 p-3';
-      container.style.zIndex = '1055';
-      document.body.appendChild(container);
-      return container;
-    }
-
-    console.log('=== FILTRAGE PRÊT ===');
+    console.log('✅ Dashboard Admin initialisé');
   });
 </script>
 
 <style>
+  /* ========== RÉORGANISATION DES DÉTAILS PAR AXE ========== */
+  .axe-stat-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: #fff;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  .axe-stat-row:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transform: translateX(3px);
+  }
+
+  .axe-stat-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 15px;
+  }
+
+  .axe-stat-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 0 0 auto;
+  }
+
+  .axe-stat-icon {
+    font-size: 22px;
+  }
+
+  .axe-stat-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .axe-stat-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+
+  .axe-stat-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .axe-stat-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .btn-export-axe {
+    padding: 6px 14px;
+    font-size: 13px;
+    border-radius: 6px;
+    border: none;
+    color: white;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+
+  .btn-export-axe:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+
+  .btn-toggle-axe {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: transform 0.3s ease;
+  }
+
+  .btn-toggle-axe:hover {
+    opacity: 0.7;
+  }
+
+  .btn-toggle-axe.collapsed i {
+    transform: rotate(0deg);
+  }
+
+  .btn-toggle-axe:not(.collapsed) i {
+    transform: rotate(180deg);
+  }
+
+  /* ========== STYLES SECTEURS ET OBJECTIFS ========== */
+  .secteur-row-themed {
+    background-color: #fafbfc;
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .secteur-row-themed:hover {
+    background-color: #f0f5fb;
+    border-left-width: 6px;
+  }
+
+  .secteur-icon-themed {
+    transition: transform 0.3s ease;
+    display: inline-block;
+  }
+
+  .secteur-row-themed.expanded .secteur-icon-themed {
+    transform: rotate(90deg);
+  }
+
+  .objectif-details-themed {
+    transition: all 0.3s ease;
+  }
+
+  .objectif-row-themed:hover {
+    background-color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  .secteur-collapse-btn-themed {
+    border: 1px solid;
+    background: white;
+    transition: all 0.2s ease;
+  }
+
+  .secteur-collapse-btn-themed:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(1.1);
+  }
+
+  /* ========== STYLES GÉNÉRAUX ========== */
   .table-hover tbody tr:hover {
     background-color: rgba(0, 123, 255, 0.05);
   }
@@ -550,7 +830,44 @@
     border: none;
   }
 
-  tr {
-    transition: opacity 0.3s ease;
+  html {
+    scroll-behavior: smooth;
+  }
+
+  #gestion-projets {
+    scroll-margin-top: 20px;
+  }
+
+  .border-left-primary {
+    border-left: 4px solid #4e73df !important;
+  }
+
+  .border-left-success {
+    border-left: 4px solid #1cc88a !important;
+  }
+
+  .border-left-info {
+    border-left: 4px solid #36b9cc !important;
+  }
+
+  .border-left-warning {
+    border-left: 4px solid #f6c23e !important;
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 992px) {
+    .axe-stat-content {
+      flex-wrap: wrap;
+    }
+
+    .axe-stat-actions {
+      width: 100%;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .axe-stat-badges {
+      flex-wrap: wrap;
+    }
   }
 </style>
