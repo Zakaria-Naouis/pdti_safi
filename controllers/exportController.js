@@ -261,11 +261,10 @@ exports.exportCanvasGlobal = async (req, res) => {
       console.log(`🔍 Filtrage Coordinateur activé pour pole_id = ${user.pole_id}`);
     }
 
-    // Tri : La vue est déjà triée par axe_id et num_projet
-    // Mais on peut forcer le tri pour être sûr
+    // Tri : Par axe_id puis par Numéro de Projet
     query += `
       ORDER BY 
-        v."Axe",
+        (SELECT a.id FROM axes a WHERE a.lib_axe = v."Axe" LIMIT 1),
         CAST(v."Num Projet" AS INTEGER)
     `;
 
@@ -420,10 +419,10 @@ exports.exportCanvas2026 = async (req, res) => {
       console.log(`🔍 Filtrage Coordinateur activé pour pole_id = ${user.pole_id}`);
     }
 
-    // Tri : Par Axe puis par Numéro de Projet
+    // Tri : Par axe_id puis par Numéro de Projet
     query += `
       ORDER BY 
-        v."Axe",
+        (SELECT a.id FROM axes a WHERE a.lib_axe = v."Axe" LIMIT 1),
         CAST(v."Num Projet" AS INTEGER)
     `;
 

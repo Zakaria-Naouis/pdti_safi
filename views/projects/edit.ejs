@@ -557,7 +557,7 @@
       <!-- Boutons d'action -->
       <div class="d-flex justify-content-between mt-4">
         <div>
-          <a href="/dashboard/admin" class="btn btn-secondary">
+          <a href="<%= user.profile_id === 1 ? '/dashboard/admin' : '/projects' %>" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-1"></i> Retour
           </a>
         </div>

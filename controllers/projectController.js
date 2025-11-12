@@ -597,6 +597,9 @@ exports.postEditProject = [
       } else if (req.user.profile_id === 5) {
         req.session.successMessage = 'Projet modifié avec succès!';
         res.redirect('/dashboard/chefPole');
+      } else if (req.user.profile_id === 1) {
+        req.session.successMessage = 'Projet modifié avec succès!';
+        res.redirect('/dashboard/admin');
       } else {
         req.session.successMessage = 'Projet modifié avec succès!';
         res.redirect('/projects');

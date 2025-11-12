@@ -940,9 +940,13 @@ var communeText = communeCount > 1 ? 'communes' : 'commune';
     const btnRetourDashboard = document.querySelector('a[href="/dashboard"]');
     if (btnRetourDashboard) {
       const urlParams = new URLSearchParams(window.location.search);
+      const fromAdmin = urlParams.get('fromAdmin') === 'true';
       const fromAxe = urlParams.get('axe') === 'true';
 
-      if (fromAxe) {
+      if (fromAdmin) {
+        btnRetourDashboard.href = '/dashboard/admin';
+        btnRetourDashboard.innerHTML = '<i class="fas fa-arrow-left me-1"></i>Retour au Dashboard';
+      } else if (fromAxe) {
         btnRetourDashboard.href = '/dashboard/gouverneur';
         btnRetourDashboard.innerHTML = '<i class="fas fa-arrow-left me-1"></i>Retour au Dashboard';
       }
