@@ -60,6 +60,8 @@ exports.postLogin = async (req, res) => {
       res.redirect('/dashboard/coordinateur');
     } else if (user.profile_id === 5) {
       res.redirect('/dashboard/chefPole');
+    } else if (user.profile_id === 7 || user.profile_id === 8 ) {  // CORRIGÉ: profile_id 7 pour Pacha 8 pour Chef de Cercle
+      res.redirect('/dashboard/pacha');
     } else {
       res.redirect('/dashboard');
     }

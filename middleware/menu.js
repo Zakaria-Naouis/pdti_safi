@@ -105,9 +105,9 @@ module.exports = async function(req, res, next) {
     // ============================================
 
     // ============================================
-    // Menu Export - Coordinateur ET Administrateur (profile_id === 4 OU 1)
+    // Menu Export - Coordinateur, Administrateur ET Pacha (profile_id === 4, 1 OU 7)
     // ============================================
-    if (user.profile_id === 4 || user.profile_id === 1) {
+    if (user.profile_id === 4 || user.profile_id === 1 || user.profile_id === 7 || user.profile_id === 8) {
       console.log(`✅ Menu Export ajouté pour l'utilisateur ${user.email} (profile_id: ${user.profile_id}${user.pole_id ? ', pole_id: ' + user.pole_id : ''})`);
       menuItems.push({
         title: 'Export',

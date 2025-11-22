@@ -22,24 +22,32 @@ class User {
    * @returns {Promise<Object|null>} - Returns the user object if found, null otherwise
    */
   static async findById(id) {
-    const result = await db.query('SELECT u.*, p.lib_pole FROM utilisateurs u LEFT JOIN poles p ON u.pole_id = p.id WHERE u.id = $1', [id]);
+    const result = await db.query(`
+      SELECT 
+        u.*, 
+        p.lib_pole,
+        u.code_cercle
+      FROM utilisateurs u 
+      LEFT JOIN poles p ON u.pole_id = p.id 
+      WHERE u.id = $1
+    `, [id]);
     return result.rows[0];
   }
 
   /**
    * Create a new user in the database
-   * @param {Object} userData - User data containing nom, prenom, email, mot_de_passe, profile_id, and pole_id
+   * @param {Object} userData - User data containing nom, prenom, email, mot_de_passe, profile_id, pole_id, and code_cercle
    * @returns {Promise<Object>} - Returns the newly created user object
    */
   static async create(userData) {
-    const { nom, prenom, email, mot_de_passe, profile_id, pole_id } = userData;
+    const { nom, prenom, email, mot_de_passe, profile_id, pole_id, code_cercle } = userData;
     // Hachage du mot de passe
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(mot_de_passe, saltRounds);
 
     const result = await db.query(
-      'INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, profile_id, pole_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [nom, prenom, email, hashedPassword, profile_id, pole_id]
+      'INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, profile_id, pole_id, code_cercle) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [nom, prenom, email, hashedPassword, profile_id, pole_id, code_cercle]
     );
     return result.rows[0];
   }

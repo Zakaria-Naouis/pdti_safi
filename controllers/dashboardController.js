@@ -923,53 +923,97 @@ exports.getChefPoleDashboard = async (req, res) => {
 
 exports.getProjectsByAxe = async (req, res) => {
   try {
-    const axeId = parseInt(req.params.axeId);
-
-    if (!axeId || isNaN(axeId) || axeId < 1) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID d\'axe invalide',
-        data: []
-      });
+    const axeId = req.params.axeId;
+    const user = req.user;
+    
+    console.log(`[getProjectsByAxe] Axe ID: ${axeId}, User: ${user.email}, Profile: ${user.profile_id}, Code Cercle: ${user.code_cercle}`);
+    
+    let query;
+    let params;
+    
+    // CORRECTION: Pour les profils Pacha (7) et Chef Cercle (8), filtrer par cercle
+    if (user.profile_id === 7 || user.profile_id === 8) {
+      if (!user.code_cercle) {
+        return res.status(403).json({
+          success: false,
+          message: 'Votre compte n\'est pas associé à un cercle.'
+        });
+      }
+      
+      // Requête filtrée par axe ET cercle
+      query = `
+        SELECT DISTINCT
+          p.id,
+          p.num_projet,
+          p.intitule,
+          p.cout_total_mdh,
+          p.nbr_emplois_directs,
+          p.nbr_beneficiaires,
+          p.annee_debut,
+          p.annee_fin,
+          p.axe_id,
+          a.lib_axe,
+          s.id as secteur_id,
+          s.lib_secteur,
+          po.id as pole_id,
+          po.lib_pole
+        FROM projets p
+        JOIN axes a ON p.axe_id = a.id
+        JOIN secteurs s ON p.secteur_id = s.id
+        JOIN poles po ON a.pole_id = po.id
+        WHERE p.axe_id = $1
+        AND p.id IN (
+          SELECT DISTINCT pc.projet_id
+          FROM projets_communes pc
+          JOIN communes c ON pc.commune_id = c.id
+          WHERE c.code_cercle = $2
+        )
+        ORDER BY p.num_projet ASC
+      `;
+      params = [axeId, user.code_cercle];
+      
+    } else {
+      // Pour les autres profils, pas de filtre par cercle
+      query = `
+        SELECT 
+          p.id,
+          p.num_projet,
+          p.intitule,
+          p.cout_total_mdh,
+          p.nbr_emplois_directs,
+          p.nbr_beneficiaires,
+          p.annee_debut,
+          p.annee_fin,
+          p.axe_id,
+          a.lib_axe,
+          s.id as secteur_id,
+          s.lib_secteur,
+          po.id as pole_id,
+          po.lib_pole
+        FROM projets p
+        JOIN axes a ON p.axe_id = a.id
+        JOIN secteurs s ON p.secteur_id = s.id
+        JOIN poles po ON a.pole_id = po.id
+        WHERE p.axe_id = $1
+        ORDER BY p.num_projet ASC
+      `;
+      params = [axeId];
     }
-
-    const projects = await db.query(`
-      SELECT 
-        p.id,
-        p.num_projet,
-        p.intitule,
-        p.cout_total_mdh,
-        p.nbr_emplois_directs,
-        p.nbr_beneficiaires,
-        p.annee_debut,
-        p.annee_fin,
-        p.axe_id,
-        a.lib_axe,
-        s.id as secteur_id,
-        s.lib_secteur,
-        po.id as pole_id,
-        po.lib_pole
-      FROM projets p
-      JOIN axes a ON p.axe_id = a.id
-      JOIN secteurs s ON p.secteur_id = s.id
-      JOIN poles po ON a.pole_id = po.id
-      WHERE p.axe_id = $1
-      ORDER BY p.num_projet, p.id ASC
-    `, [axeId]);
-
+    
+    const result = await db.query(query, params);
+    
+    console.log(`[getProjectsByAxe] ${result.rows.length} projets trouvés pour l'axe ${axeId}`);
+    
     res.json({
       success: true,
-      data: projects.rows,
-      count: projects.rows.length
+      projects: result.rows
     });
-
+    
   } catch (error) {
-    console.error('ERREUR getProjectsByAxe:', error);
+    console.error('[getProjectsByAxe] Erreur:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
-      error: error.message,
-      data: []
+      message: 'Erreur lors de la récupération des projets'
     });
   }
 };
@@ -1121,3 +1165,414 @@ function buildHierarchicalStructureFromView(data) {
 }
 
 exports.buildHierarchicalStructureFromView = buildHierarchicalStructureFromView;
+
+// *************================================================================
+// ***********************************STATISTIQUES HIÉRARCHIQUES PAR PACHALIK (PACHA)
+// *******************================================================================
+
+/**
+ * Récupère les statistiques hiérarchiques filtrées par pachalik (code_cercle)
+ * CORRECTION: Utilise COUNT(DISTINCT p.id) pour éviter les doublons
+ * @param {number} codeCercle - Code du cercle (entier) pour filtrer les données
+ * @returns {Array} Données hiérarchiques structurées filtrées par pachalik
+/**
+ * Récupère les statistiques hiérarchiques filtrées par pachalik (code_cercle)
+ * CORRECTION : Gère les projets sans secteur/objectif et corrige les agrégats
+ * @param {number} codeCercle - Code du cercle (entier) pour filtrer les données
+ * @returns {Array} Données hiérarchiques structurées filtrées par pachalik
+ */
+exports.getHierarchicalStatsByPachalik = async (codeCercle) => {
+  try {
+    console.log(`[getHierarchicalStatsByPachalik] Récupération des stats pour le cercle: ${codeCercle}`);
+    
+    const result = await db.query(`
+      -- Sélectionner TOUS les projets du cercle
+      WITH projets_du_cercle AS (
+        SELECT DISTINCT 
+          p.id,
+          p.axe_id,
+          p.secteur_id,
+          p.objectif_id,
+          p.cout_total_mdh,
+          p.nbr_emplois_directs,
+          p.nbr_beneficiaires
+        FROM projets p
+        JOIN projets_communes pc ON p.id = pc.projet_id
+        JOIN communes c ON pc.commune_id = c.id
+        WHERE c.code_cercle = $1
+      )
+      -- Agréger les données par niveau hiérarchique
+      SELECT 
+        a.id as axe_id,
+        a.lib_axe as libelle_axe,
+        po.lib_pole,
+        s.id as secteur_id,
+        s.lib_secteur as libelle_secteur,
+        o.id as objectif_id,
+        o.nom_objectif as libelle_objectif,
+        COUNT(p.id) as nombre_projets,
+        COALESCE(SUM(p.cout_total_mdh), 0) as cout_total_mdh,
+        COALESCE(SUM(p.nbr_emplois_directs), 0) as total_emplois_directs,
+        COALESCE(SUM(p.nbr_beneficiaires), 0) as total_beneficiaires
+      FROM axes a
+      LEFT JOIN projets_du_cercle p ON a.id = p.axe_id
+      LEFT JOIN poles po ON a.pole_id = po.id
+      LEFT JOIN secteurs s ON p.secteur_id = s.id
+      LEFT JOIN objectifs o ON p.objectif_id = o.id
+      GROUP BY a.id, a.lib_axe, po.lib_pole, s.id, s.lib_secteur, o.id, o.nom_objectif
+      HAVING COUNT(p.id) > 0
+      ORDER BY a.id, s.id NULLS FIRST, o.id NULLS FIRST
+    `, [codeCercle]);
+    
+    console.log(`[getHierarchicalStatsByPachalik] ${result.rows.length} lignes retournées pour le cercle ${codeCercle}`);
+    
+    // Debug: Vérifier le comptage par axe
+    const projetsByAxe = {};
+    result.rows.forEach(row => {
+      if (!projetsByAxe[row.axe_id]) {
+        projetsByAxe[row.axe_id] = 0;
+      }
+      projetsByAxe[row.axe_id] += parseInt(row.nombre_projets);
+    });
+    
+    console.log('[getHierarchicalStatsByPachalik] Projets par axe:', 
+      Object.entries(projetsByAxe).map(([axe, count]) => `Axe ${axe}: ${count} projets`).join(', ')
+    );
+    
+    return result.rows;
+  } catch (error) {
+    console.error('[getHierarchicalStatsByPachalik] Erreur:', error.message);
+    console.error('[getHierarchicalStatsByPachalik] Stack:', error.stack);
+    return [];
+  }
+};
+
+/**
+ * Récupère les informations du pachalik à partir du code_cercle
+ * @param {number} codeCercle - Code du cercle (entier)
+ * @returns {Object} Informations du pachalik
+ */
+exports.getPachalikInfo = async (codeCercle) => {
+  try {
+    console.log(`[getPachalikInfo] Recherche des infos pour code_cercle: ${codeCercle}`);
+    
+    // CORRECTION: Utiliser directement la table cercles
+    const result = await db.query(`
+      SELECT 
+        code_cercle,
+        nom_cercle_fr as nom_pachalik
+      FROM cercles
+      WHERE code_cercle = $1
+      LIMIT 1
+    `, [codeCercle]);
+    
+    if (result.rows.length > 0) {
+      console.log(`[getPachalikInfo] Cercle trouvé:`, result.rows[0]);
+      return result.rows[0];
+    }
+    
+    console.log(`[getPachalikInfo] Aucun cercle trouvé avec code_cercle ${codeCercle}`);
+    
+    // Fallback si le cercle n'existe pas
+    return {
+      code_cercle: codeCercle,
+      nom_pachalik: 'Cercle ' + codeCercle
+    };
+  } catch (error) {
+    console.error('[getPachalikInfo] Erreur:', error.message);
+    return {
+      code_cercle: codeCercle,
+      nom_pachalik: 'Cercle ' + codeCercle
+    };
+  }
+};
+
+/**
+ * Récupère tous les projets d'un pachalik
+ * @param {number} codeCercle - Code du cercle (entier)
+ * @returns {Array} Liste des projets
+ */
+// ================================================================
+// CORRECTION DE LA FONCTION getProjectsByPachalik
+// À remplacer dans dashboardController.js (ligne ~1208)
+// ================================================================
+
+/**
+ * Récupère tous les projets d'un pachalik - VERSION CORRIGÉE DÉFINITIVE
+ * @param {number} codeCercle - Code du cercle (entier)
+ * @returns {Array} Liste des projets (sans doublons)
+ */
+exports.getProjectsByPachalik = async (codeCercle) => {
+  try {
+    const result = await db.query(`
+      SELECT 
+        p.id,
+        p.num_projet,
+        p.intitule,
+        p.cout_total_mdh,
+        p.nbr_emplois_directs,
+        p.nbr_beneficiaires,
+        p.annee_debut,
+        p.annee_fin,
+        a.id as axe_id,
+        a.lib_axe,
+        s.id as secteur_id,
+        s.lib_secteur,
+        po.id as pole_id,
+        po.lib_pole
+      FROM projets p
+      JOIN axes a ON p.axe_id = a.id
+      -- CORRECTION : Utiliser LEFT JOIN pour inclure les projets sans secteur
+      LEFT JOIN secteurs s ON p.secteur_id = s.id
+      JOIN poles po ON a.pole_id = po.id
+      WHERE p.id IN (
+        SELECT DISTINCT pc.projet_id
+        FROM projets_communes pc
+        JOIN communes c ON pc.commune_id = c.id
+        WHERE c.code_cercle = $1
+      )
+      ORDER BY a.id, p.num_projet
+    `, [codeCercle]);
+    
+    console.log(`[getProjectsByPachalik] ${result.rows.length} projets trouvés pour le cercle ${codeCercle}`);
+    
+    // Debug par axe
+    const projectsByAxe = {};
+    result.rows.forEach(p => {
+      if (!projectsByAxe[p.axe_id]) {
+        projectsByAxe[p.axe_id] = [];
+      }
+      projectsByAxe[p.axe_id].push(p.num_projet);
+    });
+    console.log('[getProjectsByPachalik] Répartition par axe:', 
+      Object.entries(projectsByAxe).map(([axeId, projets]) => 
+        `Axe ${axeId}: ${projets.length} projets (${projets.join(', ')})`
+      ).join(', ')
+    );
+    
+    return result.rows;
+  } catch (error) {
+    console.error('[getProjectsByPachalik] Erreur:', error.message);
+    return [];
+  }
+};
+
+/**
+ * Fonction de construction de la structure hiérarchique pour les stats par pachalik
+ * VERSION CORRIGÉE : Gère les NULLs pour secteur et objectif
+ */
+function buildHierarchicalStructureByPachalik(data) {
+  try {
+    const hierarchy = [];
+    const totalStats = {
+      nombre_projets: 0,
+      cout_total_mdh: 0,
+      total_emplois_directs: 0,
+      total_beneficiaires: 0
+    };
+    
+    console.log(`[buildHierarchicalStructureByPachalik] Traitement de ${data.length} lignes de données brutes`);
+    
+    // Grouper les données par axe, secteur et objectif (gère les NULLs)
+    const groupedData = {};
+    
+    data.forEach(row => {
+      const axeKey = row.axe_id;
+      // CORRECTION : Utiliser des clés uniques même pour les NULLs
+      const secteurKey = row.secteur_id !== null ? `s_${row.secteur_id}` : 's_null';
+      const objectifKey = row.objectif_id !== null ? `o_${row.objectif_id}` : 'o_null';
+      
+      if (!groupedData[axeKey]) {
+        groupedData[axeKey] = {
+          axe_id: row.axe_id,
+          axe_libelle: row.libelle_axe,
+          pole_libelle: row.lib_pole || 'Pôle non spécifié',
+          secteurs: {}
+        };
+      }
+      
+      // CORRECTION : TOUJOURS créer le secteur (même si NULL)
+      if (!groupedData[axeKey].secteurs[secteurKey]) {
+        groupedData[axeKey].secteurs[secteurKey] = {
+          secteur_id: row.secteur_id,
+          // Nom par défaut si secteur NULL
+          secteur_libelle: row.libelle_secteur || 'Secteur non défini',
+          objectifs: {}
+        };
+      }
+      
+      // CORRECTION : TOUJOURS créer l'objectif (même si NULL)
+      if (!groupedData[axeKey].secteurs[secteurKey].objectifs[objectifKey]) {
+        groupedData[axeKey].secteurs[secteurKey].objectifs[objectifKey] = {
+          objectif_id: row.objectif_id,
+          // Nom par défaut si objectif NULL
+          objectif_libelle: row.libelle_objectif || 'Objectif non défini',
+          nombre_projets: 0,
+          cout_total_mdh: 0,
+          total_emplois_directs: 0,
+          total_beneficiaires: 0
+        };
+      }
+      
+      // Accumuler les valeurs
+      const target = groupedData[axeKey].secteurs[secteurKey].objectifs[objectifKey];
+      target.nombre_projets += parseInt(row.nombre_projets || 0);
+      target.cout_total_mdh += parseFloat(row.cout_total_mdh || 0);
+      target.total_emplois_directs += parseInt(row.total_emplois_directs || 0);
+      target.total_beneficiaires += parseInt(row.total_beneficiaires || 0);
+    });
+    
+    // Construire la hiérarchie finale
+    Object.values(groupedData).forEach(axeData => {
+      const axe = {
+        axe_id: axeData.axe_id,
+        axe_libelle: axeData.axe_libelle,
+        pole_libelle: axeData.pole_libelle,
+        secteurs: [],
+        stats: {
+          nombre_projets: 0,
+          cout_total_mdh: 0,
+          total_emplois_directs: 0,
+          total_beneficiaires: 0
+        }
+      };
+      
+      Object.values(axeData.secteurs).forEach(secteurData => {
+        const secteur = {
+          secteur_id: secteurData.secteur_id,
+          secteur_libelle: secteurData.secteur_libelle,
+          objectifs: Object.values(secteurData.objectifs), // Convertir en array
+          stats: {
+            nombre_projets: 0,
+            cout_total_mdh: 0,
+            total_emplois_directs: 0,
+            total_beneficiaires: 0
+          }
+        };
+        
+        // Calculer les stats du secteur
+        secteur.objectifs.forEach(obj => {
+          secteur.stats.nombre_projets += obj.nombre_projets;
+          secteur.stats.cout_total_mdh += obj.cout_total_mdh;
+          secteur.stats.total_emplois_directs += obj.total_emplois_directs;
+          secteur.stats.total_beneficiaires += obj.total_beneficiaires;
+        });
+        
+        axe.secteurs.push(secteur);
+        
+        // Mettre à jour les stats de l'axe
+        axe.stats.nombre_projets += secteur.stats.nombre_projets;
+        axe.stats.cout_total_mdh += secteur.stats.cout_total_mdh;
+        axe.stats.total_emplois_directs += secteur.stats.total_emplois_directs;
+        axe.stats.total_beneficiaires += secteur.stats.total_beneficiaires;
+      });
+      
+      hierarchy.push(axe);
+      
+      // Mettre à jour les totaux généraux
+      totalStats.nombre_projets += axe.stats.nombre_projets;
+      totalStats.cout_total_mdh += axe.stats.cout_total_mdh;
+      totalStats.total_emplois_directs += axe.stats.total_emplois_directs;
+      totalStats.total_beneficiaires += axe.stats.total_beneficiaires;
+    });
+    
+    const result = {
+      axes: hierarchy,
+      totalStats: totalStats
+    };
+    
+    console.log(`[buildHierarchicalStructureByPachalik] ${hierarchy.length} axes construits`);
+    console.log(`[buildHierarchicalStructureByPachalik] Totaux: ${totalStats.nombre_projets} projets, ${totalStats.cout_total_mdh} MDH`);
+    
+    return result;
+  } catch (error) {
+    console.error('[buildHierarchicalStructureByPachalik] Erreur:', error.message);
+    console.error('[buildHierarchicalStructureByPachalik] Stack:', error.stack);
+    return { axes: [], totalStats: {} };
+  }
+}
+
+// ================================================================
+// TABLEAU DE BORD PACHA - VERSION FINALE
+// ================================================================
+
+exports.getPachaDashboard = async (req, res) => {
+  try {
+    console.log('[getPachaDashboard] ===== DÉBUT DU CHARGEMENT =====');
+    console.log('[getPachaDashboard] Utilisateur:', {
+      id: req.user.id,
+      email: req.user.email,
+      profile_id: req.user.profile_id,
+      code_cercle: req.user.code_cercle
+    });
+    
+    // Vérifier que l'utilisateur a un code_cercle
+    if (!req.user.code_cercle) {
+      console.error('[getPachaDashboard] ❌ Code cercle manquant pour l\'utilisateur:', req.user.email);
+      return res.status(403).render('error', {
+        title: 'Accès non autorisé',
+        pageTitle: 'Erreur 403',
+        message: 'Votre compte n\'est pas associé à un pachalik. Veuillez contacter l\'administrateur pour qu\'il vous attribue un code_cercle.',
+        error: { status: 403 }
+      });
+    }
+    
+    const codeCercle = req.user.code_cercle;
+    console.log(`[getPachaDashboard] ✓ Code cercle: ${codeCercle} (type: ${typeof codeCercle})`);
+    
+    // Récupérer les informations du pachalik
+    console.log('[getPachaDashboard] Récupération des informations du pachalik...');
+    const pachalikInfo = await this.getPachalikInfo(codeCercle);
+    console.log('[getPachaDashboard] ✓ Informations du pachalik:', pachalikInfo);
+    
+    // Récupérer les statistiques hiérarchiques par pachalik
+    console.log('[getPachaDashboard] Récupération des statistiques hiérarchiques...');
+    const hierarchicalStatsData = await this.getHierarchicalStatsByPachalik(codeCercle);
+    console.log(`[getPachaDashboard] ✓ Stats hiérarchiques: ${hierarchicalStatsData.length} lignes`);
+    
+    const hierarchicalStats = buildHierarchicalStructureByPachalik(hierarchicalStatsData);
+    console.log(`[getPachaDashboard] ✓ Hiérarchie construite: ${hierarchicalStats.axes.length} axes`);
+    
+    // Récupérer tous les projets du pachalik
+    console.log('[getPachaDashboard] Récupération des projets...');
+    const axeProjects = await this.getProjectsByPachalik(codeCercle);
+    console.log(`[getPachaDashboard] ✓ Projets récupérés: ${axeProjects.length} projets`);
+    
+    // Préparer les statistiques globales
+    const stats = hierarchicalStats.totalStats || {
+      total_projets: 0,
+      cout_total: 0,
+      total_emplois: 0,
+      total_beneficiaires: 0
+    };
+    
+    console.log('[getPachaDashboard] ✓ Statistiques globales:', stats);
+    console.log('[getPachaDashboard] ===== RENDU DE LA VUE =====');
+    
+    res.render('dashboard/pacha', {
+      title: `Tableau de bord Pacha - ${pachalikInfo.nom_pachalik} - PDTI Safi`,
+      pageTitle: `Tableau de bord - ${pachalikInfo.nom_pachalik}`,
+      pachalikInfo: pachalikInfo,
+      stats: {
+        total_projets: stats.nombre_projets || 0,
+        cout_total: stats.cout_total_mdh || 0,
+        total_emplois: stats.total_emplois_directs || 0,
+        total_beneficiaires: stats.total_beneficiaires || 0
+      },
+      hierarchicalStats: hierarchicalStats,
+      hierarchicalStatsJSON: JSON.stringify(hierarchicalStats),
+      axeProjects: axeProjects
+    });
+    
+    console.log('[getPachaDashboard] ===== TERMINÉ AVEC SUCCÈS =====');
+  } catch (error) {
+    console.error('[getPachaDashboard] ❌ ERREUR:', error);
+    console.error('[getPachaDashboard] Stack:', error.stack);
+    res.status(500).render('error', {
+      title: 'Erreur',
+      pageTitle: 'Erreur 500',
+      message: 'Une erreur est survenue lors de l\'affichage du tableau de bord: ' + error.message,
+      error: error
+    });
+  }
+};

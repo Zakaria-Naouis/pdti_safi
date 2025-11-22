@@ -43,7 +43,8 @@ function decodeHTMLEntities(text) {
             </h4>
           </div>
           <div class="col-md-4 text-end">
-            <a href="/dashboard" class="btn btn-light btn-sm">
+            <!-- CORRECTION 2: Bouton retour dynamique selon le profil -->
+            <a href="<%= returnToDashboard %>" class="btn btn-light btn-sm">
               <i class="fas fa-arrow-left me-1"></i>Retour au Dashboard
             </a>
           </div>

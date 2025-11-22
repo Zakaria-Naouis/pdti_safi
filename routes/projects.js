@@ -9,6 +9,9 @@ const { body, param } = require('express-validator');
 // Middleware d'authentification
 const { isAuthenticated } = require('../middleware/auth');
 const { checkPermission } = require('../middleware/rbac');
+const { checkProjectAccessForPacha } = require('../middleware/checkProjectAccess');
+
+
 
 // Validation middleware pour les paramètres de route
 const validateProjectId = [
@@ -251,31 +254,36 @@ const projectValidation = [
     .custom((value) => {
       if (!value) return true;
      
-      const communes = Array.isArray(value) ? value : [value];
-     
-      for (const communeId of communes) {
-        if (!communeId || isNaN(parseInt(communeId)) || parseInt(communeId) < 1) {
-          throw new Error('IDs de communes invalides');
+      if (typeof value === 'string') {
+        try {
+          value = JSON.parse(value);
+        } catch (e) {
+          throw new Error('Format de communes invalide');
         }
       }
+     
+      if (!Array.isArray(value)) {
+        throw new Error('Les communes doivent être un tableau');
+      }
+     
       return true;
     })
 ];
 
-// Middleware pour journaliser les actions sur les projets
+// Middleware de log pour les actions de projets
 const logProjectAction = (action) => {
   return (req, res, next) => {
-    console.log(`[${new Date().toISOString()}] Action: ${action} - Utilisateur: ${req.user?.email || 'Anonyme'} - Projet: ${req.params.id || 'Nouveau'}`);
+    console.log(`Action: ${action} - User: ${req.user?.email} - Time: ${new Date().toISOString()}`);
     next();
   };
 };
 
-// Middleware de sécurité pour vérifier la cohérence des données
+// Middleware de sécurité supplémentaire
 const securityCheck = async (req, res, next) => {
   try {
     const db = require('../config/database');
    
-    // Vérifier que l'axe appartient au bon pôle pour les utilisateurs restreints
+    // Vérifier que l'axe appartient au pôle de l'utilisateur si coordinateur ou chef de pôle
     if (req.body.axe_id && (req.user.profile_id === 4 || req.user.profile_id === 5)) {
       const axeResult = await db.query('SELECT pole_id FROM axes WHERE id = $1', [req.body.axe_id]);
      
@@ -359,9 +367,15 @@ router.get('/add',
   projectController.getAddProject
 );
 
-// Route pour voir les détails d'un projet (consultation)
+// Route pour voir les détails d'un projet (consultation) - CORRIGÉ
 router.get('/view/:id',
   validateProjectId,
+  async (req, res, next) => {
+    if (req.user.profile_id === 7 || req.user.profile_id === 8) {
+      return checkProjectAccessForPacha(req, res, next);
+    }
+    next();
+  },
   checkPermission('Consulter projets'),
   ProjectViewController.getProjectDetails
 );

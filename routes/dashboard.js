@@ -17,6 +17,7 @@ router.get('/admin', dashboardController.getAdminDashboard);
 router.get('/gouverneur', dashboardController.getGouverneurDashboard);
 router.get('/coordinateur', dashboardController.getCoordinateurDashboard);
 router.get('/chefPole', dashboardController.getChefPoleDashboard);
+router.get('/pacha', dashboardController.getPachaDashboard);  // Route Pacha
 
 // Route par défaut qui redirige selon le profil
 router.get('/', (req, res) => {
@@ -37,6 +38,10 @@ router.get('/', (req, res) => {
       break;
     case 5: // Chef de pôle
       res.redirect('/dashboard/chefPole');
+      break;
+    case 7: // Pacha (CORRIGÉ: profile_id 7)
+    case 8: // chef Cercle (CORRIGÉ: profile_id 8)   
+      res.redirect('/dashboard/pacha');
       break;
     default:
       res.redirect('/dashboard/coordinateur');

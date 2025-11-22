@@ -1,0 +1,544 @@
+<!-- views/dashboard/pacha.ejs - Dashboard pour le profil Pacha (filtré par pachalik) -->
+<!-- VERSION CORRIGÉE avec les 3 modifications demandées -->
+
+<div class="row mt-1 mb-5">
+  <div class="col-md-12">
+    <div class="card shadow-lg">
+      <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-globe me-2"></i>Statistiques Globales Hiérarchiques - <%= pachalikInfo.nom_pachalik %>
+          </h5>
+          <span class="badge bg-light text-dark">
+            <i class="fas fa-cube me-1"></i>Vision Complète
+          </span>
+        </div>
+      </div>
+      <div class="card-body pb-0 pt-4">
+        <!-- Statistiques Globales -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="card bg-light border-0 shadow-sm">
+              <div class="card-body text-center">
+                <h6 class="text-muted mb-2">TOTAL PROJETS</h6>
+                <h2 class="mb-0 text-primary fw-bold"><%= stats.total_projets %></h2>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-light border-0 shadow-sm">
+              <div class="card-body text-center">
+                <h6 class="text-muted mb-2">COÛT TOTAL (MDH)</h6>
+                <h2 class="mb-0 text-success fw-bold"><%= parseFloat(stats.cout_total).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h2>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-light border-0 shadow-sm">
+              <div class="card-body text-center">
+                <h6 class="text-muted mb-2">EMPLOIS DIRECTS</h6>
+                <h2 class="mb-0 text-info fw-bold"><%= parseInt(stats.total_emplois).toLocaleString('fr-FR') %></h2>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-light border-0 shadow-sm">
+              <div class="card-body text-center">
+                <h6 class="text-muted mb-2">BÉNÉFICIAIRES</h6>
+                <h2 class="mb-0 text-warning fw-bold"><%= parseInt(stats.total_beneficiaires).toLocaleString('fr-FR') %></h2>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Détails par Axe avec couleurs de la charte graphique -->
+        <div class="row">
+          <div class="col-md-12">
+            <div class="accordion" id="axesAccordion">
+              <% 
+              hierarchicalStats.axes.forEach(function(axe, axeIndex) { 
+                // COULEURS DE LA CHARTE GRAPHIQUE - Mapping exact avec les pôles
+                let axeColor = '#666666'; // Couleur par défaut
+                let axeColorLight = '#f8f8f8';
+                let axeColorBorder = '#999999';
+                
+                const axeColorMap = {
+                  'Investissements et emplois': { 
+                    main: '#BF9000',    // --pole-investissement
+                    light: '#FFF8E7', 
+                    border: '#D4A017' 
+                  },
+                  'Renforcement et amélioration des services sociaux de base : Education': { 
+                    main: '#DD6615',    // --pole-education
+                    light: '#FFE8D6', 
+                    border: '#E87E2E' 
+                  },
+                  'Renforcement des services sociaux de base : Santé': { 
+                    main: '#385623',    // --pole-sante
+                    light: '#E8F0E0', 
+                    border: '#5A7A3D' 
+                  },
+                  'Infrastructures de base et mise à niveau': { 
+                    main: '#595959',    // --pole-amenagement
+                    light: '#F0F0F0', 
+                    border: '#808080' 
+                  },
+                  'Gestion Proactive et durable des ressources en eau': { 
+                    main: '#002060',    // --pole-ressources-eau
+                    light: '#E6E6F0', 
+                    border: '#003399' 
+                  }
+                };
+                
+                // Chercher la couleur correspondante
+                for (const [axeName, colors] of Object.entries(axeColorMap)) {
+                  if (axe.axe_libelle && axe.axe_libelle.includes(axeName.split(':')[0])) {
+                    axeColor = colors.main;
+                    axeColorLight = colors.light;
+                    axeColorBorder = colors.border;
+                    break;
+                  }
+                }
+              %>
+              <div class="accordion-item mb-3 border-0 shadow-sm" style="border-left: 5px solid <%= axeColor %> !important;">
+                <h2 class="accordion-header" id="heading<%= axe.axe_id %>">
+                  <!-- MODIFICATION 2: Changer aria-expanded="true" en "false" et class="accordion-button" en "accordion-button collapsed" -->
+                  <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<%= axe.axe_id %>" aria-expanded="false" aria-controls="collapse<%= axe.axe_id %>" style="background-color: <%= axeColorLight %>; border-bottom: 2px solid <%= axeColor %>;">
+                    <div class="w-100 d-flex justify-content-between align-items-center pe-3">
+                      <span style="color: <%= axeColor %>;">
+                        <i class="fas fa-arrow-right me-2"></i><%= axe.axe_libelle %>
+                      </span>
+                      <div class="d-flex gap-3">
+                        <span class="badge rounded-pill" style="background-color: <%= axeColor %>;">
+                          <i class="fas fa-cubes me-1"></i><%= axe.stats.nombre_projets %> projets
+                        </span>
+                        <span class="badge rounded-pill" style="background-color: <%= axeColor %>;">
+                          <i class="fas fa-dollar-sign me-1"></i><%= parseFloat(axe.stats.cout_total_mdh).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> MDH
+                        </span>
+                        <span class="badge rounded-pill" style="background-color: <%= axeColor %>;">
+                          <i class="fas fa-briefcase me-1"></i><%= parseInt(axe.stats.total_emplois_directs).toLocaleString('fr-FR') %> emplois
+                        </span>
+                        <span class="badge rounded-pill" style="background-color: <%= axeColor %>;">
+                          <i class="fas fa-users me-1"></i><%= parseInt(axe.stats.total_beneficiaires).toLocaleString('fr-FR') %> bénéficiaires
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                </h2>
+                <!-- MODIFICATION 2: Retirer "show" de la classe pour que l'accordéon soit fermé par défaut -->
+                <div id="collapse<%= axe.axe_id %>" class="accordion-collapse collapse" aria-labelledby="heading<%= axe.axe_id %>" data-bs-parent="#axesAccordion">
+                  <div class="accordion-body p-0">
+
+                    <% if (axe.secteurs && axe.secteurs.length > 0) { %>
+                    <!-- Tableau des secteurs -->
+                    <div class="table-responsive">
+                      <table class="table table-sm table-striped mb-0">
+                        <thead style="background-color: <%= axeColorLight %>; border-top: 3px solid <%= axeColor %>;">
+                          <tr>
+                            <th style="width: 25%; color: <%= axeColor %>;"><strong>
+                                <i class="fas fa-layer-group me-2"></i>Secteur
+                              </strong></th>
+                            <th class="text-center" style="width: 12%; color: <%= axeColor %>;"><strong>
+                                <i class="fas fa-cubes me-1"></i>Projets
+                              </strong></th>
+                            <th class="text-center" style="width: 18%; color: <%= axeColor %>;"><strong>
+                                <i class="fas fa-dollar-sign me-1"></i>Montant (MDH)
+                              </strong></th>
+                            <th class="text-center" style="width: 12%; color: <%= axeColor %>;"><strong>
+                                <i class="fas fa-briefcase me-1"></i>Emplois
+                              </strong></th>
+                            <th class="text-center" style="width: 18%; color: <%= axeColor %>;"><strong>
+                                <i class="fas fa-users me-1"></i>Bénéficiaires
+                              </strong></th>
+                            <th class="text-center" style="width: 15%;"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% axe.secteurs.forEach(function(secteur, secteurIndex) { %>
+                          <!-- Ligne Secteur -->
+                          <tr class="secteur-row" role="button" data-bs-toggle="collapse" data-bs-target="#details-axe<%= axe.axe_id %>-secteur<%= secteurIndex %>">
+                            <td>
+                              <span class="cursor-pointer">
+                                <i class="fas fa-chevron-right me-2" style="color: <%= axeColor %>;"></i>
+                                <strong><%= secteur.secteur_libelle %></strong>
+                              </span>
+                            </td>
+                            <td class="text-center">
+                              <span class="badge" style="background-color: <%= axeColor %>;">
+                                <%= secteur.stats.nombre_projets %>
+                              </span>
+                            </td>
+                            <td class="text-center">
+                              <strong style="color: <%= axeColor %>;">
+                                <%= parseFloat(secteur.stats.cout_total_mdh).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                              </strong>
+                            </td>
+                            <td class="text-center">
+                              <span class="badge" style="background-color: <%= axeColor %>; opacity: 0.8;">
+                                <%= parseInt(secteur.stats.total_emplois_directs).toLocaleString('fr-FR') %>
+                              </span>
+                            </td>
+                            <td class="text-center">
+                              <span class="badge" style="background-color: <%= axeColor %>; opacity: 0.85;">
+                                <%= parseInt(secteur.stats.total_beneficiaires).toLocaleString('fr-FR') %>
+                              </span>
+                            </td>
+                            <td class="text-center">
+                              <button class="btn btn-sm" style="border-color: <%= axeColor %>; color: <%= axeColor %>;">
+                                <i class="fas fa-chevron-down"></i>
+                              </button>
+                            </td>
+                          </tr>
+
+                          <!-- Détails des objectifs -->
+                          <tr class="collapse" id="details-axe<%= axe.axe_id %>-secteur<%= secteurIndex %>">
+                            <td colspan="6" class="p-3" style="background-color: <%= axeColorLight %>;">
+                              <div class="objectifs-list">
+                                <% if (secteur.objectifs && secteur.objectifs.length > 0) { %>
+                                <table class="table table-sm mb-0">
+                                  <thead>
+                                    <tr>
+                                      <th><i class="fas fa-bullseye me-2"></i>Objectif</th>
+                                      <th class="text-center">Projets</th>
+                                      <th class="text-end">Coût (MDH)</th>
+                                      <th class="text-end">Emplois</th>
+                                      <th class="text-end">Bénéficiaires</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <% secteur.objectifs.forEach(function(objectif) { %>
+                                    <tr>
+                                      <td><%= objectif.objectif_libelle %></td>
+                                      <td class="text-center">
+                                        <span class="badge" style="background-color: <%= axeColor %>;">
+                                          <%= objectif.nombre_projets %>
+                                        </span>
+                                      </td>
+                                      <td class="text-end fw-bold" style="color: <%= axeColor %>;">
+                                        <%= parseFloat(objectif.cout_total_mdh).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                                      </td>
+                                      <td class="text-end">
+                                        <%= parseInt(objectif.total_emplois_directs).toLocaleString('fr-FR') %>
+                                      </td>
+                                      <td class="text-end">
+                                        <%= parseInt(objectif.total_beneficiaires).toLocaleString('fr-FR') %>
+                                      </td>
+                                    </tr>
+                                    <% }); %>
+                                  </tbody>
+                                </table>
+                                <% } else { %>
+                                <p class="text-muted mb-0">Aucun objectif défini pour ce secteur.</p>
+                                <% } %>
+                              </div>
+                            </td>
+                          </tr>
+                          <% }); %>
+                        </tbody>
+                      </table>
+                    </div>
+                    <% } else { %>
+                    <p class="text-muted p-3">Aucun secteur disponible pour cet axe.</p>
+                    <% } %>
+
+                  </div>
+                </div>
+              </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SECTION: AXES DE PROJETS - AVEC NAVIGATION VERS DÉTAILS -->
+<!-- MODIFICATION 1: Changer le background du header pour utiliser bg-primary -->
+<!-- ================================================================ -->
+
+<div class="row mt-4 mb-5">
+  <div class="col-md-12">
+    <div class="card shadow-lg">
+      <!-- MODIFICATION 1: Remplacer le gradient par bg-primary pour avoir la même couleur que "Statistiques Globales" -->
+      <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-project-diagram me-2"></i>Axes de Projets
+          </h5>
+          <span class="badge bg-light text-dark">
+            <%= hierarchicalStats.axes.length %> axes
+          </span>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-4">
+          <% 
+          hierarchicalStats.axes.forEach(function(axe, axeCardIndex) { 
+            // Réutiliser le même mapping de couleurs
+            let axeColor = '#666666';
+            let axeColorLight = '#f8f8f8';
+            
+            const axeColorMap = {
+              'Investissements et emplois': { main: '#BF9000', light: '#FFF8E7' },
+              'Renforcement et amélioration des services sociaux de base : Education': { main: '#DD6615', light: '#FFE8D6' },
+              'Renforcement des services sociaux de base : Santé': { main: '#385623', light: '#E8F0E0' },
+              'Infrastructures de base et mise à niveau': { main: '#595959', light: '#F0F0F0' },
+              'Gestion Proactive et durable des ressources en eau': { main: '#002060', light: '#E6E6F0' }
+            };
+            
+            for (const [axeName, colors] of Object.entries(axeColorMap)) {
+              if (axe.axe_libelle && axe.axe_libelle.includes(axeName.split(':')[0])) {
+                axeColor = colors.main;
+                axeColorLight = colors.light;
+                break;
+              }
+            }
+            
+            // MODIFICATION 3: Filtrer ET TRIER les projets par axe_id et num_projet
+            const axeProjectsList = axeProjects
+              .filter(p => p.axe_id === axe.axe_id)
+              .sort((a, b) => {
+                // Tri par num_projet (numérique si possible, sinon alphabétique)
+                const numA = parseInt(a.num_projet) || a.num_projet;
+                const numB = parseInt(b.num_projet) || b.num_projet;
+                if (typeof numA === 'number' && typeof numB === 'number') {
+                  return numA - numB;
+                }
+                return String(a.num_projet).localeCompare(String(b.num_projet));
+              });
+          %>
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 5px solid <%= axeColor %> !important;">
+              <div class="card-header" style="background-color: <%= axeColorLight %>; border-bottom: 2px solid <%= axeColor %>;">
+                <div class="d-flex justify-content-between align-items-start">
+                  <h6 class="mb-0 fw-bold" style="color: <%= axeColor %>;">
+                    <i class="fas fa-arrow-right me-2"></i>Axe <%= axe.axe_id %>
+                  </h6>
+                  <span class="badge rounded-pill" style="background-color: <%= axeColor %>;">
+                    <%= axeProjectsList.length %> projets
+                  </span>
+                </div>
+                <p class="mb-0 mt-2" style="color: <%= axeColor %>; font-size: 0.95rem;">
+                  <%= axe.axe_libelle %>
+                </p>
+              </div>
+              <div class="card-body">
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <div class="d-flex align-items-center p-2 rounded" style="background-color: <%= axeColorLight %>;">
+                      <i class="fas fa-dollar-sign me-2" style="color: <%= axeColor %>;"></i>
+                      <div>
+                        <small class="d-block text-muted">Investissement</small>
+                        <strong style="color: <%= axeColor %>; font-size: 0.9rem;">
+                          <%= parseFloat(axe.stats.cout_total_mdh).toLocaleString('fr-FR') %> MDH
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="d-flex align-items-center p-2 rounded" style="background-color: <%= axeColorLight %>;">
+                      <i class="fas fa-briefcase me-2" style="color: <%= axeColor %>;"></i>
+                      <div>
+                        <small class="d-block text-muted">Emplois</small>
+                        <strong style="color: <%= axeColor %>; font-size: 0.9rem;">
+                          <%= parseInt(axe.stats.total_emplois_directs).toLocaleString('fr-FR') %>
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <% if (axeProjectsList.length > 0) { %>
+                <div class="mb-3">
+                  <h6 class="text-muted mb-2" style="font-size: 0.85rem;">
+                    <i class="fas fa-list-ul me-1"></i>Projets de l'axe:
+                  </h6>
+                  <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                    <% axeProjectsList.forEach(function(project) { %>
+                    <a href="/projects/view/<%= project.id %>?fromPacha=true" class="list-group-item list-group-item-action d-flex justify-content-between align-items-start p-2" style="border-left: 3px solid <%= axeColor %>;">
+                      <div class="me-auto">
+                        <div class="fw-bold" style="font-size: 0.85rem; color: <%= axeColor %>;">
+                          <%= project.num_projet %>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.75rem;">
+                          <%= project.intitule.substring(0, 60) %><%= project.intitule.length > 60 ? '...' : '' %>
+                        </small>
+                        <div class="mt-1">
+                          <span class="badge badge-sm" style="background-color: <%= axeColor %>; font-size: 0.7rem;">
+                            <%= project.lib_secteur %>
+                          </span>
+                        </div>
+                      </div>
+                      <div class="text-end ms-2">
+                        <small class="d-block text-success fw-bold" style="font-size: 0.75rem;">
+                          <%= parseFloat(project.cout_total_mdh || 0).toLocaleString('fr-FR') %> MDH
+                        </small>
+                        <small class="d-block text-info" style="font-size: 0.7rem;">
+                          <%= parseInt(project.nbr_emplois_directs || 0).toLocaleString('fr-FR') %> emplois
+                        </small>
+                      </div>
+                    </a>
+                    <% }); %>
+                  </div>
+                </div>
+
+                <div class="d-grid">
+                  <button class="btn btn-sm" style="background-color: <%= axeColor %>; color: white;" onclick="window.location.href='/projects?axe_id=<%= axe.axe_id %>'">
+                    <i class="fas fa-eye me-1"></i>Voir tous les projets
+                  </button>
+                </div>
+                <% } else { %>
+                <p class="text-muted text-center mb-0" style="font-size: 0.85rem;">
+                  <i class="fas fa-info-circle me-1"></i>Aucun projet dans cet axe
+                </p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SECTION: PROJETS DE L'AXE - TABLEAU DÉTAILLÉ -->
+<!-- ================================================================ -->
+
+<!-- <div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>Liste complète des projets du pachalik
+          </h5>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 5%;">N°</th>
+                <th style="width: 35%;">Intitulé</th>
+                <th style="width: 15%;">Secteur</th>
+                <th class="text-end" style="width: 12%;">Coût (MDH)</th>
+                <th class="text-center" style="width: 10%;">Emplois</th>
+                <th class="text-center" style="width: 13%;">Période</th>
+                <th class="text-center" style="width: 10%;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (axeProjects && axeProjects.length > 0) { 
+                axeProjects.forEach(function(project) { 
+              %>
+              <tr>
+                <td class="fw-bold text-primary"><%= project.num_projet %></td>
+                <td>
+                  <div class="fw-semibold"><%= project.intitule %></div>
+                </td>
+                <td>
+                  <span class="badge bg-secondary"><%= project.lib_secteur %></span>
+                </td>
+                <td class="text-end">
+                  <span class="text-success fw-bold"><%= parseFloat(project.cout_total_mdh || 0).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-info"><%= parseInt(project.nbr_emplois_directs || 0).toLocaleString('fr-FR') %></span>
+                </td>
+                <td class="text-center text-muted">
+                  <small><%= project.annee_debut || '-' %> - <%= project.annee_fin || '-' %></small>
+                </td>
+                <td class="text-center">
+                  <a href="/projects/view/<%= project.id %>?fromPacha=true" class="btn btn-sm btn-outline-primary" title="Voir détails">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                </td>
+              </tr>
+              <% }); 
+              } else { %>
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                  <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                  Aucun projet disponible pour ce pachalik
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> -->
+
+<style>
+  /* Styles additionnels */
+  .accordion-button:not(.collapsed) {
+    box-shadow: none;
+  }
+
+  .accordion-button:focus {
+    box-shadow: none;
+    border-color: transparent;
+  }
+
+  .list-group-item-action:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+    transform: translateX(3px);
+    transition: all 0.2s ease;
+  }
+
+  .badge {
+    font-weight: 500;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+
+  .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  .secteur-row:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+</style>
+
+<script>
+  // Initialisation
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard Pacha chargé avec <%= hierarchicalStats.axes.length %> axes');
+
+    // Gestion des chevrons pour les secteurs
+    document.querySelectorAll('.secteur-row').forEach(function(row) {
+      row.addEventListener('click', function() {
+        const icon = this.querySelector('.fa-chevron-right, .fa-chevron-down');
+        if (icon) {
+          if (icon.classList.contains('fa-chevron-right')) {
+            icon.classList.remove('fa-chevron-right');
+            icon.classList.add('fa-chevron-down');
+          } else {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-right');
+          }
+        }
+      });
+    });
+  });
+</script>
